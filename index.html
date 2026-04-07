@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frequentar - Sistema de Presença por Wi-Fi</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Tela de Login com Seleção de Perfil -->
+        <div id="loginScreen" class="screen active">
+            <div class="login-card">
+                <div class="logo">
+                    <i class="fas fa-wifi"></i>
+                    <h1>Frequentar</h1>
+                </div>
+                <p class="subtitle">Sistema de Presença por Wi-Fi</p>
+                
+                <div class="form-group">
+                    <select id="loginPerfil" class="perfil-select">
+                        <option value="admin">Administrador</option>
+                        <option value="professor">Professor</option>
+                        <option value="aluno">Aluno</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <input type="email" id="loginEmail" placeholder="E-mail" value="admin@escola.com">
+                </div>
+                
+                <div class="form-group">
+                    <input type="password" id="loginPassword" placeholder="Senha" value="admin123">
+                </div>
+                
+                <button id="loginBtn" class="btn btn-primary">Entrar</button>
+                
+                <div class="login-footer">
+                    <p>Demo - Admin: admin@escola.com / admin123</p>
+                    <p>Professor: professor@escola.com / prof123</p>
+                    <p>Aluno: aluno@escola.com / aluno123</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tela Principal - Painel do Administrador -->
+        <div id="adminScreen" class="screen">
+            <div class="sidebar">
+                <div class="sidebar-header">
+                    <i class="fas fa-wifi"></i>
+                    <h2>Frequentar</h2>
+                    <span class="badge admin-badge">Admin</span>
+                </div>
+                <nav class="sidebar-nav">
+                    <button class="nav-item active" data-tab="admin-dashboard"><i class="fas fa-chart-line"></i><span>Dashboard</span></button>
+                    <button class="nav-item" data-tab="admin-alunos"><i class="fas fa-users"></i><span>Alunos</span></button>
+                    <button class="nav-item" data-tab="admin-professores"><i class="fas fa-chalkboard-user"></i><span>Professores</span></button>
+                    <button class="nav-item" data-tab="admin-turmas"><i class="fas fa-school"></i><span>Turmas</span></button>
+                    <button class="nav-item" data-tab="admin-aps"><i class="fas fa-wifi"></i><span>Pontos de Acesso</span></button>
+                    <button class="nav-item" data-tab="admin-presenca"><i class="fas fa-calendar-check"></i><span>Presença</span></button>
+                    <button class="nav-item" data-tab="admin-relatorios"><i class="fas fa-file-alt"></i><span>Relatórios</span></button>
+                    <button class="nav-item" data-tab="admin-config"><i class="fas fa-cog"></i><span>Configurações</span></button>
+                </nav>
+                <div class="sidebar-footer">
+                    <div class="user-info">
+                        <i class="fas fa-user-circle"></i>
+                        <div>
+                            <span id="adminUserName">Administrador</span>
+                            <small id="adminUserEmail">admin@escola.com</small>
+                        </div>
+                    </div>
+                    <button id="adminLogoutBtn" class="btn-logout"><i class="fas fa-sign-out-alt"></i><span>Sair</span></button>
+                </div>
+            </div>
+            <div class="main-content">
+                <div class="top-bar"><h1 id="adminPageTitle">Dashboard</h1></div>
+                <div class="content-area" id="adminContent"></div>
+            </div>
+        </div>
+
+        <!-- Tela Principal - Painel do Professor -->
+        <div id="professorScreen" class="screen">
+            <div class="sidebar">
+                <div class="sidebar-header">
+                    <i class="fas fa-wifi"></i>
+                    <h2>Frequentar</h2>
+                    <span class="badge professor-badge">Professor</span>
+                </div>
+                <nav class="sidebar-nav">
+                    <button class="nav-item active" data-tab="prof-dashboard"><i class="fas fa-chart-line"></i><span>Dashboard</span></button>
+                    <button class="nav-item" data-tab="prof-turmas"><i class="fas fa-users"></i><span>Minhas Turmas</span></button>
+                    <button class="nav-item" data-tab="prof-presenca"><i class="fas fa-calendar-check"></i><span>Registrar Presença</span></button>
+                    <button class="nav-item" data-tab="prof-relatorios"><i class="fas fa-file-alt"></i><span>Relatórios</span></button>
+                    <button class="nav-item" data-tab="prof-config"><i class="fas fa-cog"></i><span>Configurações</span></button>
+                </nav>
+                <div class="sidebar-footer">
+                    <div class="user-info">
+                        <i class="fas fa-user-circle"></i>
+                        <div><span id="profUserName">Professor</span><small id="profUserEmail">professor@escola.com</small></div>
+                    </div>
+                    <button id="profLogoutBtn" class="btn-logout"><i class="fas fa-sign-out-alt"></i><span>Sair</span></button>
+                </div>
+            </div>
+            <div class="main-content">
+                <div class="top-bar"><h1 id="profPageTitle">Dashboard</h1></div>
+                <div class="content-area" id="profContent"></div>
+            </div>
+        </div>
+
+        <!-- Tela Principal - Painel do Aluno -->
+        <div id="alunoScreen" class="screen">
+            <div class="sidebar">
+                <div class="sidebar-header">
+                    <i class="fas fa-wifi"></i>
+                    <h2>Frequentar</h2>
+                    <span class="badge aluno-badge">Aluno</span>
+                </div>
+                <nav class="sidebar-nav">
+                    <button class="nav-item active" data-tab="aluno-dashboard"><i class="fas fa-chart-line"></i><span>Minha Frequência</span></button>
+                    <button class="nav-item" data-tab="aluno-presenca"><i class="fas fa-calendar-check"></i><span>Registrar Presença</span></button>
+                    <button class="nav-item" data-tab="aluno-relatorios"><i class="fas fa-file-alt"></i><span>Meus Relatórios</span></button>
+                    <button class="nav-item" data-tab="aluno-config"><i class="fas fa-cog"></i><span>Configurações</span></button>
+                </nav>
+                <div class="sidebar-footer">
+                    <div class="user-info">
+                        <i class="fas fa-user-circle"></i>
+                        <div><span id="alunoUserName">Aluno</span><small id="alunoUserEmail">aluno@escola.com</small></div>
+                    </div>
+                    <button id="alunoLogoutBtn" class="btn-logout"><i class="fas fa-sign-out-alt"></i><span>Sair</span></button>
+                </div>
+            </div>
+            <div class="main-content">
+                <div class="top-bar"><h1 id="alunoPageTitle">Minha Frequência</h1></div>
+                <div class="content-area" id="alunoContent"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>
