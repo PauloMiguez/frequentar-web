@@ -2697,3 +2697,76 @@ function renderizarTabelaAPs(aps) {
 }
 
 console.log('✅ Tabela de APs com CSS consistente!');
+
+// ============================================
+// FUNÇÃO CORRIGIDA PARA EDITAR PERFIL DO ALUNO
+// ============================================
+
+// Substituir a função carregarAlunoConfig existente
+window.carregarAlunoConfig = async (container) => {
+    container.innerHTML = `
+        <div class="card">
+            <h3><i class="fas fa-user-edit"></i> Meus Dados</h3>
+            <div class="form-group">
+                <label>Nome completo</label>
+                <input type="text" id="alunoNome" value="${escapeHtml(usuarioAtual.nome)}" class="form-control">
+            </div>
+            <div class="form-group">
+                <label>E-mail</label>
+                <input type="email" id="alunoEmail" value="${escapeHtml(usuarioAtual.email)}" class="form-control">
+            </div>
+            <div class="form-group">
+                <label>Matrícula</label>
+                <input type="text" id="alunoMatricula" value="${escapeHtml(usuarioAtual.matricula || '')}" class="form-control" disabled>
+                <small>Matrícula não pode ser alterada</small>
+            </div>
+            <div class="form-group">
+                <label>Nova Senha</label>
+                <input type="password" id="alunoNovaSenha" placeholder="Deixe em branco para manter a atual" class="form-control">
+            </div>
+            <button id="salvarAlunoConfigBtn" class="btn btn-primary">Salvar Alterações</button>
+        </div>
+        <div class="card">
+            <h3><i class="fas fa-mobile-alt"></i> Dispositivo</h3>
+            <p><strong>Device ID:</strong> <code id="deviceIdDisplay">${localStorage.getItem('deviceId') || 'Não configurado'}</code></p>
+            <button id="gerarNovoDeviceId" class="btn btn-sm btn-outline">Gerar Novo ID</button>
+        </div>
+    `;
+    
+    document.getElementById('salvarAlunoConfigBtn').onclick = async () => {
+        const nome = document.getElementById('alunoNome').value.trim();
+        const email = document.getElementById('alunoEmail').value.trim();
+        const senha = document.getElementById('alunoNovaSenha').value;
+        
+        if (!nome || !email) {
+            showToast('Preencha nome e e-mail', 'error');
+            return;
+        }
+        
+        try {
+            await apiPut('/usuarios/perfil', { nome, email, senha: senha || undefined });
+            showToast('Dados atualizados com sucesso!', 'success');
+            
+            // Atualizar dados locais
+            usuarioAtual.nome = nome;
+            usuarioAtual.email = email;
+            localStorage.setItem('usuario', JSON.stringify(usuarioAtual));
+            
+            // Atualizar nome na sidebar
+            document.getElementById('alunoUserName').textContent = nome;
+            
+        } catch (error) {
+            console.error('Erro:', error);
+            showToast(error.message || 'Erro ao atualizar dados', 'error');
+        }
+    };
+    
+    document.getElementById('gerarNovoDeviceId').onclick = () => {
+        const novoId = 'device-' + Date.now() + '-' + Math.random().toString(36).substring(7);
+        localStorage.setItem('deviceId', novoId);
+        document.getElementById('deviceIdDisplay').textContent = novoId;
+        showToast('Novo Device ID gerado!', 'success');
+    };
+};
+
+console.log('✅ Função carregarAlunoConfig corrigida!');
