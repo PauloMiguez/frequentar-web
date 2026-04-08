@@ -26,7 +26,6 @@ O **Frequentar** é um sistema inovador para registro de presença em instituiç
 - ✅ **Tempo Real**: Dashboard atualiza em tempo real
 - ✅ **Relatórios**: Geração de relatórios com filtros
 - ✅ **Identificação de Faltas**: Alerta alunos com alta taxa de ausência
-- ✅ **QR Code**: Identificação rápida para registro manual
 
 ## ✨ Funcionalidades
 
@@ -54,9 +53,7 @@ O **Frequentar** é um sistema inovador para registro de presença em instituiç
 | Funcionalidade | Descrição |
 |----------------|-----------|
 | Minha Frequência | Dashboard com percentual de presença |
-| Registrar Presença | Registro manual próprio |
 | Histórico Completo | Visualização de todo histórico |
-| QR Code | Identificação para registro manual |
 | Relatórios | Exportar seu histórico |
 
 ## 🛠️ Tecnologias Utilizadas
@@ -103,15 +100,7 @@ npm install
 
 ### 3. Configure o banco de dados
 
-```bash
-# Execute o script de criação do banco
-node criar-tabelas.js
-node inserir-usuarios.js
-```
-
-### 4. Configure o frontend
-
-Os arquivos HTML, CSS e JS já estão prontos na pasta raiz.
+O sistema criará automaticamente as tabelas necessárias na primeira execução. Certifique-se de que o MySQL está rodando.
 
 ## ⚙️ Configuração do Banco de Dados
 
@@ -120,15 +109,6 @@ Os arquivos HTML, CSS e JS já estão prontos na pasta raiz.
 ```sql
 CREATE DATABASE frequentar_web;
 USE frequentar_web;
-
--- Tabelas do sistema
-CREATE TABLE usuarios (...);
-CREATE TABLE turmas (...);
-CREATE TABLE professores_turmas (...);
-CREATE TABLE alunos_turmas (...);
-CREATE TABLE access_points (...);
-CREATE TABLE presenca (...);
-CREATE TABLE wifi_config (...);
 ```
 
 ### Configurar credenciais
@@ -177,8 +157,6 @@ Abra o navegador e acesse: **`http://localhost:8080`**
 frequentar-web/
 ├── backend/
 │   ├── server.js              # Servidor principal
-│   ├── criar-tabelas.js       # Script para criar tabelas
-│   ├── inserir-usuarios.js    # Script para inserir usuários
 │   ├── package.json
 │   └── node_modules/
 ├── css/
@@ -212,6 +190,11 @@ frequentar-web/
 | POST | `/api/admin/aps` | Criar AP |
 | DELETE | `/api/admin/aps/:id` | Excluir AP |
 | GET | `/api/admin/relatorios` | Relatórios |
+| GET | `/api/turmas` | Listar turmas |
+| POST | `/api/turmas` | Criar turma |
+| PUT | `/api/turmas/:id` | Atualizar turma |
+| DELETE | `/api/turmas/:id` | Excluir turma |
+| POST | `/api/turmas/:id/professor` | Vincular professor |
 
 ### Professor
 | Método | Endpoint | Descrição |
@@ -225,7 +208,6 @@ frequentar-web/
 |--------|----------|-----------|
 | GET | `/api/aluno/stats` | Estatísticas do aluno |
 | GET | `/api/aluno/historico` | Histórico de presença |
-| POST | `/api/aluno/presenca/manual` | Registrar presença manual |
 
 ## 👥 Credenciais de Acesso
 
@@ -236,16 +218,6 @@ frequentar-web/
 | **Aluno** | `aluno@escola.com` | `aluno123` |
 
 ## 🔧 Solução de Problemas
-
-### Erro: "Table 'frequentar_web.presenca' doesn't exist"
-
-**Solução:** Execute o script de criação das tabelas:
-
-```bash
-cd backend
-node criar-tabelas.js
-node inserir-usuarios.js
-```
 
 ### Erro: "Access denied for user 'root'"
 
@@ -273,6 +245,10 @@ kill -9 <PID>
 cd backend
 npm install
 ```
+
+### Erro: "Cannot DELETE /api/admin/alunos/:id"
+
+**Solução:** O sistema usa exclusão lógica (desativação). O aluno é desativado, não removido do banco.
 
 ## 📄 Licença
 

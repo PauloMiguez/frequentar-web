@@ -520,10 +520,6 @@ function renderizarTabelaAPs(aps) {
 }
 
 // Funções globais
-window.editarAluno = (id) => showToast(`Editar aluno ${id}`, 'info');
-window.excluirAluno = async (id) => { if (confirm('Tem certeza?')) { try { await apiDelete(`/admin/alunos/${id}`); showToast('Aluno excluído!', 'success'); location.reload(); } catch(e) { showToast(e.message, 'error'); } } };
-window.editarProfessor = (id) => showToast(`Editar professor ${id}`, 'info');
-window.excluirProfessor = async (id) => { if (confirm('Tem certeza?')) { try { await apiDelete(`/admin/professores/${id}`); showToast('Professor excluído!', 'success'); location.reload(); } catch(e) { showToast(e.message, 'error'); } } };
 window.editarTurma = (id) => showToast(`Editar turma ${id}`, 'info');
 window.excluirTurma = async (id) => { if (confirm('Tem certeza?')) { try { await apiDelete(`/turmas/${id}`); showToast('Turma excluída!', 'success'); location.reload(); } catch(e) { showToast(e.message, 'error'); } } };
 window.excluirAP = async (id) => { if (confirm('Tem certeza?')) { try { await apiDelete(`/admin/aps/${id}`); showToast('AP excluído!', 'success'); location.reload(); } catch(e) { showToast(e.message, 'error'); } } };
@@ -1076,3 +1072,1168 @@ async function carregarAlunoPresenca(container) {
 window.carregarAlunoPresenca = carregarAlunoPresenca;
 
 console.log('✅ QR Code removido do perfil aluno!');
+// ============================================
+// FUNÇÕES CORRIGIDAS PARA ADMIN
+// ============================================
+
+// Editar Aluno - Modal completo
+window.editarAluno = async (id) => {
+    console.log('✏️ Editando aluno ID:', id);
+    try {
+        const alunos = await apiGet('/admin/alunos');
+        const aluno = alunos.find(a => a.id === id);
+        
+        if (!aluno) {
+            showToast('Aluno não encontrado', 'error');
+            return;
+        }
+        
+        const modal = document.createElement('div');
+        modal.className = 'modal active';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3><i class="fas fa-user-edit"></i> Editar Aluno</h3>
+                    <span class="modal-close">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <input type="text" id="editAlunoNome" value="${escapeHtml(aluno.nome)}" placeholder="Nome completo">
+                    <input type="text" id="editAlunoMatricula" value="${escapeHtml(aluno.matricula)}" placeholder="Matrícula">
+                    <input type="email" id="editAlunoEmail" value="${escapeHtml(aluno.email)}" placeholder="E-mail">
+                </div>
+                <div class="modal-footer">
+                    <button id="saveEditAlunoBtn" class="btn btn-primary">Salvar</button>
+                    <button class="btn btn-outline modal-close-btn">Cancelar</button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        const closeModal = () => modal.remove();
+        modal.querySelectorAll('.modal-close, .modal-close-btn').forEach(btn => {
+            btn.addEventListener('click', closeModal);
+        });
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeModal();
+        });
+        
+        document.getElementById('saveEditAlunoBtn').onclick = async () => {
+            const nome = document.getElementById('editAlunoNome').value.trim();
+            const matricula = document.getElementById('editAlunoMatricula').value.trim();
+            const email = document.getElementById('editAlunoEmail').value.trim();
+            
+            if (!nome || !matricula || !email) {
+                showToast('Preencha todos os campos', 'error');
+                return;
+            }
+            
+            try {
+                await apiPut(`/admin/alunos/${id}`, { nome, matricula, email });
+                showToast('Aluno atualizado com sucesso!', 'success');
+                closeModal();
+                const content = document.getElementById('adminContent');
+                if (content) await carregarAdminAlunos(content);
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+        };
+        
+    } catch (error) {
+        console.error('Erro:', error);
+        showToast('Erro ao carregar dados do aluno', 'error');
+    }
+};
+
+// Excluir Aluno
+window.excluirAluno = async (id) => {
+    if (confirm('⚠️ Tem certeza que deseja excluir este aluno? Esta ação não pode ser desfeita!')) {
+        try {
+            await apiDelete(`/admin/alunos/${id}`);
+            showToast('Aluno excluído com sucesso!', 'success');
+            const content = document.getElementById('adminContent');
+            if (content) await carregarAdminAlunos(content);
+        } catch (error) {
+            showToast(error.message, 'error');
+        }
+    }
+};
+
+// Editar Professor
+window.editarProfessor = async (id) => {
+    console.log('✏️ Editando professor ID:', id);
+    try {
+        const professores = await apiGet('/admin/professores');
+        const professor = professores.find(p => p.id === id);
+        
+        if (!professor) {
+            showToast('Professor não encontrado', 'error');
+            return;
+        }
+        
+        const modal = document.createElement('div');
+        modal.className = 'modal active';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3><i class="fas fa-user-edit"></i> Editar Professor</h3>
+                    <span class="modal-close">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <input type="text" id="editProfNome" value="${escapeHtml(professor.nome)}" placeholder="Nome completo">
+                    <input type="email" id="editProfEmail" value="${escapeHtml(professor.email)}" placeholder="E-mail">
+                    <input type="text" id="editProfMatricula" value="${escapeHtml(professor.matricula)}" placeholder="Matrícula">
+                </div>
+                <div class="modal-footer">
+                    <button id="saveEditProfBtn" class="btn btn-primary">Salvar</button>
+                    <button class="btn btn-outline modal-close-btn">Cancelar</button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        const closeModal = () => modal.remove();
+        modal.querySelectorAll('.modal-close, .modal-close-btn').forEach(btn => {
+            btn.addEventListener('click', closeModal);
+        });
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeModal();
+        });
+        
+        document.getElementById('saveEditProfBtn').onclick = async () => {
+            const nome = document.getElementById('editProfNome').value.trim();
+            const email = document.getElementById('editProfEmail').value.trim();
+            const matricula = document.getElementById('editProfMatricula').value.trim();
+            
+            if (!nome || !email || !matricula) {
+                showToast('Preencha todos os campos', 'error');
+                return;
+            }
+            
+            try {
+                await apiPut(`/admin/professores/${id}`, { nome, email, matricula });
+                showToast('Professor atualizado com sucesso!', 'success');
+                closeModal();
+                const content = document.getElementById('adminContent');
+                if (content) await carregarAdminProfessores(content);
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+        };
+        
+    } catch (error) {
+        console.error('Erro:', error);
+        showToast('Erro ao carregar dados do professor', 'error');
+    }
+};
+
+// Excluir Professor
+window.excluirProfessor = async (id) => {
+    if (confirm('⚠️ Tem certeza que deseja excluir este professor? Esta ação não pode ser desfeita!')) {
+        try {
+            await apiDelete(`/admin/professores/${id}`);
+            showToast('Professor excluído com sucesso!', 'success');
+            const content = document.getElementById('adminContent');
+            if (content) await carregarAdminProfessores(content);
+        } catch (error) {
+            showToast(error.message, 'error');
+        }
+    }
+};
+
+console.log('✅ Funções de edição/exclusão corrigidas!');
+
+// ============================================
+// FUNÇÃO DE EXCLUSÃO CORRIGIDA (remove vínculos)
+// ============================================
+
+// Excluir Aluno - Remove vínculos primeiro
+window.excluirAluno = async (id) => {
+    if (confirm('⚠️ Tem certeza que deseja excluir este aluno? Todas as matrículas do aluno serão removidas.')) {
+        try {
+            // Primeiro, remover vínculo do aluno com turma (alunos_turmas)
+            await apiDelete(`/admin/alunos/${id}/vincular`);
+            
+            // Depois, excluir o aluno
+            await apiDelete(`/admin/alunos/${id}`);
+            
+            showToast('Aluno excluído com sucesso!', 'success');
+            
+            // Recarregar a lista
+            const content = document.getElementById('adminContent');
+            if (content) await carregarAdminAlunos(content);
+            
+        } catch (error) {
+            console.error('Erro na exclusão:', error);
+            showToast(error.message, 'error');
+        }
+    }
+};
+
+// Excluir Professor - Remove vínculos primeiro
+window.excluirProfessor = async (id) => {
+    if (confirm('⚠️ Tem certeza que deseja excluir este professor? Todas as turmas vinculadas serão removidas.')) {
+        try {
+            // Primeiro, remover vínculo do professor com turmas (professores_turmas)
+            await apiDelete(`/admin/professores/${id}/vincular`);
+            
+            // Depois, excluir o professor
+            await apiDelete(`/admin/professores/${id}`);
+            
+            showToast('Professor excluído com sucesso!', 'success');
+            
+            // Recarregar a lista
+            const content = document.getElementById('adminContent');
+            if (content) await carregarAdminProfessores(content);
+            
+        } catch (error) {
+            console.error('Erro na exclusão:', error);
+            showToast(error.message, 'error');
+        }
+    }
+};
+
+console.log('✅ Funções de exclusão com remoção de vínculos adicionadas!');
+
+// ============================================
+// FUNÇÃO DE EXCLUSÃO CORRIGIDA
+// ============================================
+
+window.excluirAluno = async (id) => {
+    if (!confirm('⚠️ Tem certeza que deseja excluir este aluno? Esta ação não pode ser desfeita!')) {
+        return;
+    }
+    
+    console.log('🗑️ Excluindo aluno ID:', id);
+    
+    try {
+        // Primeiro, remover vínculo com turma
+        const responseVinculo = await fetch(`${API_URL}/admin/alunos/${id}/vincular`, {
+            method: 'DELETE',
+            headers: { 'Authorization': token }
+        });
+        
+        if (!responseVinculo.ok) {
+            console.log('Aviso: Não foi possível remover vínculo ou aluno não tem vínculo');
+        }
+        
+        // Depois, excluir o aluno
+        const response = await fetch(`${API_URL}/admin/alunos/${id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': token }
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            showToast('Aluno excluído com sucesso!', 'success');
+            // Recarregar a lista
+            const content = document.getElementById('adminContent');
+            if (content) await carregarAdminAlunos(content);
+        } else {
+            showToast(data.error || 'Erro ao excluir aluno', 'error');
+        }
+    } catch (error) {
+        console.error('Erro na exclusão:', error);
+        showToast('Erro ao conectar com o servidor', 'error');
+    }
+};
+
+window.excluirProfessor = async (id) => {
+    if (!confirm('⚠️ Tem certeza que deseja excluir este professor? Esta ação não pode ser desfeita!')) {
+        return;
+    }
+    
+    console.log('🗑️ Excluindo professor ID:', id);
+    
+    try {
+        // Primeiro, remover vínculo com turmas
+        const responseVinculo = await fetch(`${API_URL}/admin/professores/${id}/vincular`, {
+            method: 'DELETE',
+            headers: { 'Authorization': token }
+        });
+        
+        if (!responseVinculo.ok) {
+            console.log('Aviso: Não foi possível remover vínculo ou professor não tem vínculo');
+        }
+        
+        // Depois, excluir o professor
+        const response = await fetch(`${API_URL}/admin/professores/${id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': token }
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            showToast('Professor excluído com sucesso!', 'success');
+            // Recarregar a lista
+            const content = document.getElementById('adminContent');
+            if (content) await carregarAdminProfessores(content);
+        } else {
+            showToast(data.error || 'Erro ao excluir professor', 'error');
+        }
+    } catch (error) {
+        console.error('Erro na exclusão:', error);
+        showToast('Erro ao conectar com o servidor', 'error');
+    }
+};
+
+console.log('✅ Funções de exclusão corrigidas!');
+
+// ============================================
+// FUNÇÃO CORRIGIDA - DESATIVAR ALUNO (NÃO EXCLUIR)
+// ============================================
+
+window.excluirAluno = async (id) => {
+    if (!confirm('⚠️ Tem certeza que deseja desativar este aluno? Ele não poderá mais registrar presença, mas os registros anteriores serão mantidos.')) {
+        return;
+    }
+    
+    console.log('🔴 Desativando aluno ID:', id);
+    
+    try {
+        // 1. Remover vínculo com turma
+        await fetch(`${API_URL}/admin/alunos/${id}/vincular`, {
+            method: 'DELETE',
+            headers: { 'Authorization': token }
+        });
+        
+        // 2. Desativar o aluno (não excluir)
+        const response = await fetch(`${API_URL}/admin/alunos/${id}/desativar`, {
+            method: 'PUT',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': token 
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            showToast('Aluno desativado com sucesso!', 'success');
+            const content = document.getElementById('adminContent');
+            if (content) await carregarAdminAlunos(content);
+        } else {
+            showToast(data.error || 'Erro ao desativar aluno', 'error');
+        }
+    } catch (error) {
+        console.error('Erro:', error);
+        showToast('Erro ao conectar com o servidor', 'error');
+    }
+};
+
+// Função para desativar professor
+window.excluirProfessor = async (id) => {
+    if (!confirm('⚠️ Tem certeza que deseja desativar este professor? Ele não poderá mais acessar o sistema, mas os registros anteriores serão mantidos.')) {
+        return;
+    }
+    
+    console.log('🔴 Desativando professor ID:', id);
+    
+    try {
+        // 1. Remover vínculo com turmas
+        await fetch(`${API_URL}/admin/professores/${id}/vincular`, {
+            method: 'DELETE',
+            headers: { 'Authorization': token }
+        });
+        
+        // 2. Desativar o professor
+        const response = await fetch(`${API_URL}/admin/professores/${id}/desativar`, {
+            method: 'PUT',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': token 
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            showToast('Professor desativado com sucesso!', 'success');
+            const content = document.getElementById('adminContent');
+            if (content) await carregarAdminProfessores(content);
+        } else {
+            showToast(data.error || 'Erro ao desativar professor', 'error');
+        }
+    } catch (error) {
+        console.error('Erro:', error);
+        showToast('Erro ao conectar com o servidor', 'error');
+    }
+};
+
+console.log('✅ Funções de desativação corrigidas!');
+
+// ============================================
+// FUNÇÕES ATUALIZADAS - APENAS USUÁRIOS ATIVOS
+// ============================================
+
+// Recarregar lista de alunos (apenas ativos)
+window.carregarAdminAlunos = async (container) => {
+    try {
+        const alunos = await apiGet('/admin/alunos');
+        const turmas = await apiGet('/turmas');
+        
+        container.innerHTML = `
+            <div class="card">
+                <h3><i class="fas fa-user-plus"></i> Cadastrar Aluno</h3>
+                <div class="form-row">
+                    <input type="text" id="novoAlunoNome" placeholder="Nome completo">
+                    <input type="text" id="novoAlunoMatricula" placeholder="Matrícula">
+                </div>
+                <div class="form-row">
+                    <input type="email" id="novoAlunoEmail" placeholder="E-mail">
+                    <select id="novoAlunoTurma">
+                        <option value="">Selecionar Turma</option>
+                        ${turmas.map(t => `<option value="${t.id}">${escapeHtml(t.nome)}</option>`).join('')}
+                    </select>
+                </div>
+                <button id="salvarAlunoBtn" class="btn btn-primary">Cadastrar</button>
+            </div>
+            <div class="card">
+                <h3><i class="fas fa-list"></i> Lista de Alunos Ativos</h3>
+                <div id="listaAlunos">${renderizarTabelaAlunos(alunos)}</div>
+            </div>
+        `;
+        
+        document.getElementById('salvarAlunoBtn').onclick = async () => {
+            const nome = document.getElementById('novoAlunoNome').value.trim();
+            const matricula = document.getElementById('novoAlunoMatricula').value.trim();
+            const email = document.getElementById('novoAlunoEmail').value.trim();
+            const turmaId = document.getElementById('novoAlunoTurma').value;
+            
+            if (!nome || !matricula || !email) {
+                showToast('Preencha todos os campos', 'error');
+                return;
+            }
+            
+            try {
+                await apiPost('/admin/alunos', { nome, matricula, email, turmaId: turmaId || null });
+                showToast('Aluno cadastrado!', 'success');
+                await window.carregarAdminAlunos(container);
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+        };
+    } catch (error) {
+        container.innerHTML = '<div class="error">Erro ao carregar alunos</div>';
+    }
+};
+
+// Função para desativar aluno (exclusão lógica)
+window.excluirAluno = async (id) => {
+    if (!confirm('⚠️ Tem certeza que deseja desativar este aluno? Ele não aparecerá mais na lista, mas seus registros de presença serão mantidos para relatórios.')) {
+        return;
+    }
+    
+    console.log('🔴 Desativando aluno ID:', id);
+    
+    try {
+        // 1. Remover vínculo com turma
+        await fetch(`${API_URL}/admin/alunos/${id}/vincular`, {
+            method: 'DELETE',
+            headers: { 'Authorization': token }
+        });
+        
+        // 2. Desativar aluno (ativo = 0)
+        const response = await fetch(`${API_URL}/admin/alunos/${id}/desativar`, {
+            method: 'PUT',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': token 
+            }
+        });
+        
+        if (response.ok) {
+            showToast('Aluno desativado com sucesso!', 'success');
+            const content = document.getElementById('adminContent');
+            if (content) await window.carregarAdminAlunos(content);
+        } else {
+            const data = await response.json();
+            showToast(data.error || 'Erro ao desativar aluno', 'error');
+        }
+    } catch (error) {
+        console.error('Erro:', error);
+        showToast('Erro ao conectar com o servidor', 'error');
+    }
+};
+
+// Editar Aluno
+window.editarAluno = async (id) => {
+    try {
+        const alunos = await apiGet('/admin/alunos');
+        const aluno = alunos.find(a => a.id === id);
+        
+        if (!aluno) {
+            showToast('Aluno não encontrado', 'error');
+            return;
+        }
+        
+        const modal = document.createElement('div');
+        modal.className = 'modal active';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3><i class="fas fa-user-edit"></i> Editar Aluno</h3>
+                    <span class="modal-close">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <input type="text" id="editAlunoNome" value="${escapeHtml(aluno.nome)}" placeholder="Nome">
+                    <input type="text" id="editAlunoMatricula" value="${escapeHtml(aluno.matricula)}" placeholder="Matrícula">
+                    <input type="email" id="editAlunoEmail" value="${escapeHtml(aluno.email)}" placeholder="E-mail">
+                </div>
+                <div class="modal-footer">
+                    <button id="saveEditAlunoBtn" class="btn btn-primary">Salvar</button>
+                    <button class="btn btn-outline modal-close-btn">Cancelar</button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        const closeModal = () => modal.remove();
+        modal.querySelectorAll('.modal-close, .modal-close-btn').forEach(btn => {
+            btn.addEventListener('click', closeModal);
+        });
+        modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+        
+        document.getElementById('saveEditAlunoBtn').onclick = async () => {
+            const nome = document.getElementById('editAlunoNome').value.trim();
+            const matricula = document.getElementById('editAlunoMatricula').value.trim();
+            const email = document.getElementById('editAlunoEmail').value.trim();
+            
+            if (!nome || !matricula || !email) {
+                showToast('Preencha todos os campos', 'error');
+                return;
+            }
+            
+            try {
+                await apiPut(`/admin/alunos/${id}`, { nome, matricula, email });
+                showToast('Aluno atualizado!', 'success');
+                closeModal();
+                const content = document.getElementById('adminContent');
+                if (content) await window.carregarAdminAlunos(content);
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+        };
+    } catch (error) {
+        showToast('Erro ao carregar dados do aluno', 'error');
+    }
+};
+
+// Renderizar tabela de alunos
+function renderizarTabelaAlunos(alunos) {
+    if (!alunos.length) return '<p>Nenhum aluno ativo cadastrado</p>';
+    return `
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Nome</th><th>Matrícula</th><th>E-mail</th><th>Turma</th><th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${alunos.map(a => `
+                    <tr>
+                        <td>${escapeHtml(a.nome)}</td>
+                        <td>${escapeHtml(a.matricula)}</td>
+                        <td>${escapeHtml(a.email)}</td>
+                        <td>${escapeHtml(a.turma_nome || '-')}</td>
+                        <td>
+                            <button class="btn-sm btn-outline" onclick="editarAluno(${a.id})">✏️ Editar</button>
+                            <button class="btn-sm btn-danger" onclick="excluirAluno(${a.id})">🗑️ Excluir</button>
+                        </td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+    `;
+}
+
+console.log('✅ Funções atualizadas - exclusão lógica implementada!');
+
+// ============================================
+// FUNÇÃO MELHORADA PARA RENDERIZAR TABELA DE TURMAS
+// ============================================
+
+function renderizarTabelaTurmas(turmas) {
+    if (!turmas || turmas.length === 0) {
+        return '<div class="empty-state">Nenhuma turma cadastrada</div>';
+    }
+    
+    return `
+        <div style="overflow-x: auto;">
+            <table class="data-table" style="width:100%; border-collapse:collapse;">
+                <thead>
+                    <tr style="background:#f8fafc;">
+                        <th style="padding:14px 12px; text-align:left;">Nome</th>
+                        <th style="padding:14px 12px; text-align:left;">Código</th>
+                        <th style="padding:14px 12px; text-align:left;">Professor</th>
+                        <th style="padding:14px 12px; text-align:left;">Período</th>
+                        <th style="padding:14px 12px; text-align:left;">Horário</th>
+                        <th style="padding:14px 12px; text-align:center;">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${turmas.map(t => `
+                        <tr style="border-bottom:1px solid #eef2f6;">
+                            <td style="padding:14px 12px;">${escapeHtml(t.nome)}</td>
+                            <td style="padding:14px 12px;">${escapeHtml(t.codigo)}</td>
+                            <td style="padding:14px 12px;">${escapeHtml(t.professor_nome || '-')}</td>
+                            <td style="padding:14px 12px;">${escapeHtml(t.periodo || '-')}</td>
+                            <td style="padding:14px 12px;">${t.horario_inicio ? t.horario_inicio.substring(0,5) : '07:00'} - ${t.horario_fim ? t.horario_fim.substring(0,5) : '12:00'}</td>
+                            <td style="padding:14px 12px; text-align:center;">
+                                <div style="display:flex; gap:8px; justify-content:center;">
+                                    <button class="btn-sm btn-outline" onclick="editarTurma(${t.id})" style="padding:6px 14px; cursor:pointer;">
+                                        <i class="fas fa-edit"></i> Editar
+                                    </button>
+                                    <button class="btn-sm btn-danger" onclick="excluirTurma(${t.id})" style="padding:6px 14px; cursor:pointer;">
+                                        <i class="fas fa-trash"></i> Excluir
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        </div>
+    `;
+}
+
+// Substituir a função antiga
+window.renderizarTabelaTurmas = renderizarTabelaTurmas;
+
+console.log('✅ Tabela de turmas com espaçamento melhorado!');
+
+// ============================================
+// FUNÇÃO EDITAR TURMA COM SELEÇÃO DE PROFESSOR
+// ============================================
+
+window.editarTurma = async (id) => {
+    try {
+        // Buscar dados da turma
+        const turmas = await apiGet('/turmas');
+        const turma = turmas.find(t => t.id === id);
+        
+        if (!turma) {
+            showToast('Turma não encontrada', 'error');
+            return;
+        }
+        
+        // Buscar lista de professores ativos
+        const professores = await apiGet('/admin/professores');
+        
+        // Buscar professor atual da turma
+        let professorAtualId = null;
+        try {
+            const [vinculo] = await apiGet(`/turmas/${id}/professor`);
+            professorAtualId = vinculo?.professor_id || null;
+        } catch(e) {}
+        
+        const modal = document.createElement('div');
+        modal.className = 'modal active';
+        modal.innerHTML = `
+            <div class="modal-content" style="max-width: 500px;">
+                <div class="modal-header">
+                    <h3><i class="fas fa-edit"></i> Editar Turma</h3>
+                    <span class="modal-close">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Nome da Turma</label>
+                        <input type="text" id="editTurmaNome" value="${escapeHtml(turma.nome)}" placeholder="Nome da Turma">
+                    </div>
+                    <div class="form-group">
+                        <label>Código</label>
+                        <input type="text" id="editTurmaCodigo" value="${escapeHtml(turma.codigo)}" placeholder="Código">
+                    </div>
+                    <div class="form-group">
+                        <label>Professor Responsável</label>
+                        <select id="editTurmaProfessor" class="form-control">
+                            <option value="">Selecione um professor</option>
+                            ${professores.map(p => `
+                                <option value="${p.id}" ${professorAtualId === p.id ? 'selected' : ''}>
+                                    ${escapeHtml(p.nome)} (${escapeHtml(p.matricula)})
+                                </option>
+                            `).join('')}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Período</label>
+                        <select id="editTurmaPeriodo" class="form-control">
+                            <option value="Matutino" ${turma.periodo === 'Matutino' ? 'selected' : ''}>Matutino (07:00 - 12:00)</option>
+                            <option value="Vespertino" ${turma.periodo === 'Vespertino' ? 'selected' : ''}>Vespertino (13:00 - 18:00)</option>
+                            <option value="Noturno" ${turma.periodo === 'Noturno' ? 'selected' : ''}>Noturno (19:00 - 22:00)</option>
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Horário de Início</label>
+                            <input type="time" id="editTurmaInicio" value="${turma.horario_inicio || '07:00'}">
+                        </div>
+                        <div class="form-group">
+                            <label>Horário de Término</label>
+                            <input type="time" id="editTurmaFim" value="${turma.horario_fim || '12:00'}">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="saveEditTurmaBtn" class="btn btn-primary">Salvar</button>
+                    <button class="btn btn-outline modal-close-btn">Cancelar</button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        const closeModal = () => modal.remove();
+        modal.querySelectorAll('.modal-close, .modal-close-btn').forEach(btn => {
+            btn.addEventListener('click', closeModal);
+        });
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeModal();
+        });
+        
+        document.getElementById('saveEditTurmaBtn').onclick = async () => {
+            const nome = document.getElementById('editTurmaNome').value.trim();
+            const codigo = document.getElementById('editTurmaCodigo').value.trim();
+            const professorId = document.getElementById('editTurmaProfessor').value;
+            const periodo = document.getElementById('editTurmaPeriodo').value;
+            const horarioInicio = document.getElementById('editTurmaInicio').value;
+            const horarioFim = document.getElementById('editTurmaFim').value;
+            
+            if (!nome || !codigo) {
+                showToast('Preencha nome e código da turma', 'error');
+                return;
+            }
+            
+            try {
+                // Atualizar dados da turma
+                await apiPut(`/turmas/${id}`, { 
+                    nome, 
+                    codigo, 
+                    periodo, 
+                    horario_inicio: horarioInicio, 
+                    horario_fim: horarioFim 
+                });
+                
+                // Atualizar vínculo com professor
+                if (professorId) {
+                    await apiPost(`/turmas/${id}/professor`, { professor_id: parseInt(professorId) });
+                }
+                
+                showToast('Turma atualizada com sucesso!', 'success');
+                closeModal();
+                
+                // Recarregar a lista de turmas
+                const content = document.getElementById('adminContent');
+                if (content) await carregarAdminTurmas(content);
+                
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+        };
+        
+    } catch (error) {
+        console.error('Erro:', error);
+        showToast('Erro ao carregar dados da turma', 'error');
+    }
+};
+
+console.log('✅ Função editarTurma atualizada com seleção de professor!');
+// ============================================
+// FUNÇÃO EDITAR TURMA COMPLETA
+// ============================================
+
+window.editarTurma = async (id) => {
+    try {
+        const turmas = await apiGet('/turmas');
+        const turma = turmas.find(t => t.id === id);
+        
+        if (!turma) {
+            showToast('Turma não encontrada', 'error');
+            return;
+        }
+        
+        const professores = await apiGet('/admin/professores');
+        
+        // Buscar professor atual da turma
+        let professorAtualId = null;
+        try {
+            const response = await fetch(`${API_URL}/turmas/${id}/professor`, {
+                headers: { 'Authorization': token }
+            });
+            if (response.ok) {
+                const data = await response.json();
+                professorAtualId = data.professor_id;
+            }
+        } catch(e) {
+            console.log('Nenhum professor vinculado');
+        }
+        
+        const modal = document.createElement('div');
+        modal.className = 'modal active';
+        modal.innerHTML = `
+            <div class="modal-content" style="max-width: 500px;">
+                <div class="modal-header">
+                    <h3><i class="fas fa-edit"></i> Editar Turma</h3>
+                    <span class="modal-close">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Nome da Turma</label>
+                        <input type="text" id="editTurmaNome" value="${escapeHtml(turma.nome)}" placeholder="Nome da Turma">
+                    </div>
+                    <div class="form-group">
+                        <label>Código</label>
+                        <input type="text" id="editTurmaCodigo" value="${escapeHtml(turma.codigo)}" placeholder="Código">
+                    </div>
+                    <div class="form-group">
+                        <label>Professor Responsável</label>
+                        <select id="editTurmaProfessor" class="form-control">
+                            <option value="">Selecione um professor</option>
+                            ${professores.map(p => `
+                                <option value="${p.id}" ${professorAtualId === p.id ? 'selected' : ''}>
+                                    ${escapeHtml(p.nome)} (${escapeHtml(p.matricula)})
+                                </option>
+                            `).join('')}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Período</label>
+                        <select id="editTurmaPeriodo" class="form-control">
+                            <option value="Matutino" ${turma.periodo === 'Matutino' ? 'selected' : ''}>Matutino (07:00 - 12:00)</option>
+                            <option value="Vespertino" ${turma.periodo === 'Vespertino' ? 'selected' : ''}>Vespertino (13:00 - 18:00)</option>
+                            <option value="Noturno" ${turma.periodo === 'Noturno' ? 'selected' : ''}>Noturno (19:00 - 22:00)</option>
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Horário de Início</label>
+                            <input type="time" id="editTurmaInicio" value="${turma.horario_inicio || '07:00'}">
+                        </div>
+                        <div class="form-group">
+                            <label>Horário de Término</label>
+                            <input type="time" id="editTurmaFim" value="${turma.horario_fim || '12:00'}">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="saveEditTurmaBtn" class="btn btn-primary">Salvar</button>
+                    <button class="btn btn-outline modal-close-btn">Cancelar</button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        const closeModal = () => modal.remove();
+        modal.querySelectorAll('.modal-close, .modal-close-btn').forEach(btn => {
+            btn.addEventListener('click', closeModal);
+        });
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeModal();
+        });
+        
+        document.getElementById('saveEditTurmaBtn').onclick = async () => {
+            const nome = document.getElementById('editTurmaNome').value.trim();
+            const codigo = document.getElementById('editTurmaCodigo').value.trim();
+            const professorId = document.getElementById('editTurmaProfessor').value;
+            const periodo = document.getElementById('editTurmaPeriodo').value;
+            const horarioInicio = document.getElementById('editTurmaInicio').value;
+            const horarioFim = document.getElementById('editTurmaFim').value;
+            
+            if (!nome || !codigo) {
+                showToast('Preencha nome e código da turma', 'error');
+                return;
+            }
+            
+            try {
+                // Atualizar dados da turma
+                await apiPut(`/turmas/${id}`, { 
+                    nome, 
+                    codigo, 
+                    periodo, 
+                    horario_inicio: horarioInicio, 
+                    horario_fim: horarioFim 
+                });
+                
+                // Atualizar vínculo com professor
+                if (professorId) {
+                    await fetch(`${API_URL}/turmas/${id}/professor`, {
+                        method: 'POST',
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'Authorization': token 
+                        },
+                        body: JSON.stringify({ professor_id: parseInt(professorId) })
+                    });
+                }
+                
+                showToast('Turma atualizada com sucesso!', 'success');
+                closeModal();
+                
+                // Recarregar a lista de turmas
+                const content = document.getElementById('adminContent');
+                if (content) await carregarAdminTurmas(content);
+                
+            } catch (error) {
+                console.error('Erro:', error);
+                showToast(error.message, 'error');
+            }
+        };
+        
+    } catch (error) {
+        console.error('Erro:', error);
+        showToast('Erro ao carregar dados da turma', 'error');
+    }
+};
+
+console.log('✅ Função editarTurma corrigida!');
+
+// ============================================
+// FUNÇÃO CORRIGIDA PARA CARREGAR TURMAS
+// ============================================
+
+window.carregarAdminTurmas = async (container) => {
+    try {
+        // Buscar turmas atualizadas
+        const turmas = await apiGet('/turmas');
+        console.log('Turmas carregadas:', turmas);
+        
+        container.innerHTML = `
+            <div class="card">
+                <h3><i class="fas fa-plus-circle"></i> Cadastrar Turma</h3>
+                <div class="form-row">
+                    <input type="text" id="novaTurmaNome" placeholder="Nome da Turma">
+                    <input type="text" id="novaTurmaCodigo" placeholder="Código">
+                </div>
+                <div class="form-row">
+                    <select id="novaTurmaProfessor">
+                        <option value="">Selecionar Professor</option>
+                        ${await carregarOpcoesProfessores()}
+                    </select>
+                    <select id="novaTurmaPeriodo">
+                        <option value="Matutino">Matutino (07:00 - 12:00)</option>
+                        <option value="Vespertino">Vespertino (13:00 - 18:00)</option>
+                        <option value="Noturno">Noturno (19:00 - 22:00)</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <input type="time" id="novaTurmaInicio" value="07:00">
+                    <input type="time" id="novaTurmaFim" value="12:00">
+                </div>
+                <button id="salvarTurmaBtn" class="btn btn-primary">Cadastrar Turma</button>
+            </div>
+            <div class="card">
+                <h3><i class="fas fa-list"></i> Lista de Turmas</h3>
+                <div style="overflow-x: auto;">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Nome</th><th>Código</th><th>Professor</th><th>Período</th><th>Horário</th><th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${turmas.map(t => `
+                                <tr>
+                                    <td>${escapeHtml(t.nome)}</td>
+                                    <td>${escapeHtml(t.codigo)}</td>
+                                    <td>${escapeHtml(t.professor_nome || '-')}</td>
+                                    <td>${escapeHtml(t.periodo || '-')}</td>
+                                    <td>${t.horario_inicio ? t.horario_inicio.substring(0,5) : '07:00'} - ${t.horario_fim ? t.horario_fim.substring(0,5) : '12:00'}</td>
+                                    <td>
+                                        <div style="display:flex; gap:8px;">
+                                            <button class="btn-sm btn-outline" onclick="editarTurma(${t.id})">✏️ Editar</button>
+                                            <button class="btn-sm btn-danger" onclick="excluirTurma(${t.id})">🗑️ Excluir</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        `;
+        
+        // Evento para cadastrar nova turma
+        document.getElementById('salvarTurmaBtn').onclick = async () => {
+            const nome = document.getElementById('novaTurmaNome').value.trim();
+            const codigo = document.getElementById('novaTurmaCodigo').value.trim();
+            const professorId = document.getElementById('novaTurmaProfessor').value;
+            const periodo = document.getElementById('novaTurmaPeriodo').value;
+            const horarioInicio = document.getElementById('novaTurmaInicio').value;
+            const horarioFim = document.getElementById('novaTurmaFim').value;
+            
+            if (!nome || !codigo) {
+                showToast('Preencha nome e código', 'error');
+                return;
+            }
+            
+            try {
+                const result = await apiPost('/turmas', { nome, codigo, periodo, horario_inicio: horarioInicio, horario_fim: horarioFim });
+                
+                if (professorId) {
+                    await fetch(`${API_URL}/turmas/${result.id}/professor`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': token },
+                        body: JSON.stringify({ professor_id: parseInt(professorId) })
+                    });
+                }
+                
+                showToast('Turma cadastrada com sucesso!', 'success');
+                await window.carregarAdminTurmas(container);
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+        };
+        
+    } catch (error) {
+        console.error('Erro:', error);
+        container.innerHTML = '<div class="error">Erro ao carregar turmas</div>';
+    }
+};
+
+// Função auxiliar para carregar opções de professores
+async function carregarOpcoesProfessores() {
+    try {
+        const professores = await apiGet('/admin/professores');
+        return professores.map(p => `<option value="${p.id}">${escapeHtml(p.nome)} (${escapeHtml(p.matricula)})</option>`).join('');
+    } catch (error) {
+        return '';
+    }
+}
+
+// Garantir que a função de editarTurma recarregue a lista
+window.editarTurma = async (id) => {
+    try {
+        const turmas = await apiGet('/turmas');
+        const turma = turmas.find(t => t.id === id);
+        
+        if (!turma) {
+            showToast('Turma não encontrada', 'error');
+            return;
+        }
+        
+        const professores = await apiGet('/admin/professores');
+        
+        let professorAtualId = null;
+        try {
+            const response = await fetch(`${API_URL}/turmas/${id}/professor`, {
+                headers: { 'Authorization': token }
+            });
+            if (response.ok) {
+                const data = await response.json();
+                professorAtualId = data.professor_id;
+            }
+        } catch(e) {}
+        
+        const modal = document.createElement('div');
+        modal.className = 'modal active';
+        modal.innerHTML = `
+            <div class="modal-content" style="max-width: 500px;">
+                <div class="modal-header">
+                    <h3><i class="fas fa-edit"></i> Editar Turma</h3>
+                    <span class="modal-close">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Nome da Turma</label>
+                        <input type="text" id="editTurmaNome" value="${escapeHtml(turma.nome)}" placeholder="Nome da Turma">
+                    </div>
+                    <div class="form-group">
+                        <label>Código</label>
+                        <input type="text" id="editTurmaCodigo" value="${escapeHtml(turma.codigo)}" placeholder="Código">
+                    </div>
+                    <div class="form-group">
+                        <label>Professor Responsável</label>
+                        <select id="editTurmaProfessor" class="form-control">
+                            <option value="">Selecione um professor</option>
+                            ${professores.map(p => `
+                                <option value="${p.id}" ${professorAtualId === p.id ? 'selected' : ''}>
+                                    ${escapeHtml(p.nome)} (${escapeHtml(p.matricula)})
+                                </option>
+                            `).join('')}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Período</label>
+                        <select id="editTurmaPeriodo" class="form-control">
+                            <option value="Matutino" ${turma.periodo === 'Matutino' ? 'selected' : ''}>Matutino (07:00 - 12:00)</option>
+                            <option value="Vespertino" ${turma.periodo === 'Vespertino' ? 'selected' : ''}>Vespertino (13:00 - 18:00)</option>
+                            <option value="Noturno" ${turma.periodo === 'Noturno' ? 'selected' : ''}>Noturno (19:00 - 22:00)</option>
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Horário de Início</label>
+                            <input type="time" id="editTurmaInicio" value="${turma.horario_inicio || '07:00'}">
+                        </div>
+                        <div class="form-group">
+                            <label>Horário de Término</label>
+                            <input type="time" id="editTurmaFim" value="${turma.horario_fim || '12:00'}">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="saveEditTurmaBtn" class="btn btn-primary">Salvar</button>
+                    <button class="btn btn-outline modal-close-btn">Cancelar</button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        const closeModal = () => modal.remove();
+        modal.querySelectorAll('.modal-close, .modal-close-btn').forEach(btn => {
+            btn.addEventListener('click', closeModal);
+        });
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeModal();
+        });
+        
+        document.getElementById('saveEditTurmaBtn').onclick = async () => {
+            const nome = document.getElementById('editTurmaNome').value.trim();
+            const codigo = document.getElementById('editTurmaCodigo').value.trim();
+            const professorId = document.getElementById('editTurmaProfessor').value;
+            const periodo = document.getElementById('editTurmaPeriodo').value;
+            const horarioInicio = document.getElementById('editTurmaInicio').value;
+            const horarioFim = document.getElementById('editTurmaFim').value;
+            
+            if (!nome || !codigo) {
+                showToast('Preencha nome e código', 'error');
+                return;
+            }
+            
+            try {
+                await apiPut(`/turmas/${id}`, { nome, codigo, periodo, horario_inicio: horarioInicio, horario_fim: horarioFim });
+                
+                if (professorId) {
+                    await fetch(`${API_URL}/turmas/${id}/professor`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': token },
+                        body: JSON.stringify({ professor_id: parseInt(professorId) })
+                    });
+                }
+                
+                showToast('Turma atualizada com sucesso!', 'success');
+                closeModal();
+                
+                // Recarregar a lista de turmas
+                const content = document.getElementById('adminContent');
+                if (content) await window.carregarAdminTurmas(content);
+                
+            } catch (error) {
+                console.error('Erro:', error);
+                showToast(error.message, 'error');
+            }
+        };
+        
+    } catch (error) {
+        console.error('Erro:', error);
+        showToast('Erro ao carregar dados da turma', 'error');
+    }
+};
+
+console.log('✅ Função carregarAdminTurmas corrigida!');
