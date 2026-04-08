@@ -1,4 +1,4 @@
-let API_URL = 'http://localhost:3000/api';
+let API_URL = 'https://frequentar-web.onrender.com/api';
 let token = null;
 let usuarioAtual = null;
 
