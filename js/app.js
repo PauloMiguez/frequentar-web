@@ -809,6 +809,7 @@ console.log('✅ Funções de detalhes da turma adicionadas!');
 
 let monitoramentoAtivo = false;
 let intervaloMonitoramento = null;
+let ultimaVerificacao = 0;
 
 // Iniciar monitoramento de Wi-Fi (simulado - em produção usaria API do navegador)
 function iniciarMonitoramentoWifi() {
@@ -2237,3 +2238,462 @@ window.editarTurma = async (id) => {
 };
 
 console.log('✅ Função carregarAdminTurmas corrigida!');
+
+// ============================================
+// FUNÇÃO ATUALIZADA PARA CADASTRAR APs
+// ============================================
+
+window.carregarAdminAPs = async (container) => {
+    try {
+        const aps = await apiGet('/admin/aps');
+        
+        container.innerHTML = `
+            <div class="card">
+                <h3><i class="fas fa-plus-circle"></i> Cadastrar Ponto de Acesso</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>BSSID (MAC do AP) *</label>
+                        <input type="text" id="novoAPBssid" placeholder="Ex: AA:BB:CC:DD:EE:FF" class="form-control">
+                        <small>Identificador único do roteador</small>
+                    </div>
+                    <div class="form-group">
+                        <label>SSID *</label>
+                        <input type="text" id="novoAPSsid" placeholder="Nome da rede Wi-Fi" class="form-control">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Sala *</label>
+                        <input type="text" id="novoAPSala" placeholder="Ex: Sala 101, Laboratório 2" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>Prédio</label>
+                        <input type="text" id="novoAPPredio" placeholder="Ex: Bloco A, Prédio Central" class="form-control">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Andar</label>
+                        <input type="number" id="novoAPAndar" placeholder="Ex: 1, 2, 3" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>Faixa de IP</label>
+                        <input type="text" id="novoAPIpRange" value="10.0.0.0/8" placeholder="Ex: 192.168.0.0/16" class="form-control">
+                        <small>Rede da escola (ex: 10.0.0.0/8, 172.16.0.0/12)</small>
+                    </div>
+                </div>
+                <button id="salvarAPBtn" class="btn btn-primary">Cadastrar Ponto de Acesso</button>
+            </div>
+            <div class="card">
+                <h3><i class="fas fa-list"></i> Pontos de Acesso Cadastrados</h3>
+                <div id="listaAPs">${renderizarTabelaAPs(aps)}</div>
+            </div>
+        `;
+        
+        document.getElementById('salvarAPBtn').onclick = async () => {
+            const bssid = document.getElementById('novoAPBssid').value.trim().toUpperCase();
+            const ssid = document.getElementById('novoAPSsid').value.trim();
+            const sala = document.getElementById('novoAPSala').value.trim();
+            const predio = document.getElementById('novoAPPredio').value.trim();
+            const andar = document.getElementById('novoAPAndar').value;
+            const ip_range = document.getElementById('novoAPIpRange').value.trim();
+            
+            if (!bssid || !ssid || !sala) {
+                showToast('Preencha BSSID, SSID e Sala', 'error');
+                return;
+            }
+            
+            // Validar formato do BSSID
+            const bssidRegex = /^([0-9A-F]{2}[:-]){5}([0-9A-F]{2})$/i;
+            if (!bssidRegex.test(bssid)) {
+                showToast('Formato de BSSID inválido. Use AA:BB:CC:DD:EE:FF', 'error');
+                return;
+            }
+            
+            try {
+                await apiPost('/admin/aps', { 
+                    bssid, 
+                    ssid, 
+                    sala, 
+                    predio, 
+                    andar: andar || null,
+                    ip_range: ip_range || '10.0.0.0/8'
+                });
+                showToast('Ponto de acesso cadastrado com sucesso!', 'success');
+                await window.carregarAdminAPs(container);
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+        };
+        
+    } catch (error) {
+        console.error('Erro:', error);
+        container.innerHTML = '<div class="error">Erro ao carregar APs</div>';
+    }
+};
+
+function renderizarTabelaAPs(aps) {
+    if (!aps.length) return '<p>Nenhum ponto de acesso cadastrado</p>';
+    return `
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>BSSID</th>
+                    <th>SSID</th>
+                    <th>Sala</th>
+                    <th>Prédio</th>
+                    <th>Andar</th>
+                    <th>IP Range</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${aps.map(ap => `
+                    <tr>
+                        <td><code>${escapeHtml(ap.bssid)}</code></td>
+                        <td>${escapeHtml(ap.ssid)}</td>
+                        <td>${escapeHtml(ap.sala)}</td>
+                        <td>${escapeHtml(ap.predio || '-')}</td>
+                        <td>${ap.andar || '-'}</td>
+                        <td>${ap.ip_range || '10.0.0.0/8'}</td>
+                        <td>
+                            <button class="btn-sm btn-danger" onclick="excluirAP(${ap.id})">
+                                <i class="fas fa-trash"></i> Excluir
+                            </button>
+                        </td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+    `;
+}
+
+console.log('✅ Função de cadastro de APs atualizada!');
+
+// ============================================
+// MONITORAMENTO DE PRESENÇA DO ALUNO
+// ============================================
+
+// Variáveis para monitoramento
+
+// Função para obter informações da rede (simulada - em produção usaria API real)
+async function obterInfoRede() {
+    // Em produção, isso seria obtido via API do navegador ou plugin
+    // Por enquanto, simulamos com dados de exemplo
+    return {
+        ssid: 'ESCOLA_WIFI',
+        bssid: 'AA:BB:CC:DD:EE:FF',
+        ip: '10.0.0.100'
+    };
+}
+
+// Registrar presença automática
+async function registrarPresencaAutomatica() {
+    // Evitar múltiplas verificações em curto intervalo
+    const agora = Date.now();
+    if (agora - ultimaVerificacao < 30000) {
+        return;
+    }
+    ultimaVerificacao = agora;
+    
+    try {
+        const deviceId = localStorage.getItem('deviceId');
+        if (!deviceId) return;
+        
+        const redeInfo = await obterInfoRede();
+        
+        const response = await fetch(`${API_URL}/presenca/auto`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                mac_address: deviceId,
+                ssid: redeInfo.ssid,
+                bssid: redeInfo.bssid,
+                client_ip: redeInfo.ip
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.status === 'registrado') {
+            showToast(`✅ Presença registrada! Sala: ${data.sala} às ${data.horario}`, 'success');
+            await carregarAlunoDashboard(document.getElementById('alunoContent'));
+        } else if (data.error === 'Fora do horário de aula') {
+            console.log(`⏰ Fora do horário de aula: ${data.horario_aula}`);
+        } else if (data.error === 'Ponto de acesso não autorizado') {
+            showToast('⚠️ Você não está em um ponto de acesso autorizado', 'warning');
+        } else if (data.error === 'IP fora da faixa permitida') {
+            showToast('⚠️ Rede não autorizada', 'warning');
+        }
+    } catch (error) {
+        console.error('Erro no registro automático:', error);
+    }
+}
+
+// Iniciar monitoramento
+function iniciarMonitoramentoPresenca() {
+    if (intervaloMonitoramento) return;
+    
+    console.log('🔍 Iniciando monitoramento de presença...');
+    intervaloMonitoramento = setInterval(() => {
+        registrarPresencaAutomatica();
+    }, 60000); // Verificar a cada minuto
+}
+
+// Parar monitoramento
+function pararMonitoramentoPresenca() {
+    if (intervaloMonitoramento) {
+        clearInterval(intervaloMonitoramento);
+        intervaloMonitoramento = null;
+        console.log('🛑 Monitoramento de presença parado');
+    }
+}
+
+// Atualizar função carregarAlunoDashboard
+const carregarAlunoDashboardOriginal = carregarAlunoDashboard;
+window.carregarAlunoDashboard = async (container) => {
+    await carregarAlunoDashboardOriginal(container);
+    iniciarMonitoramentoPresenca();
+};
+
+console.log('✅ Sistema de validação de presença implementado!');
+
+// ============================================
+// FUNÇÃO ATUALIZADA PARA RENDERIZAR TABELA DE APs
+// ============================================
+
+function renderizarTabelaAPs(aps) {
+    if (!aps.length) return '<p>Nenhum ponto de acesso cadastrado</p>';
+    return `
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>BSSID</th>
+                    <th>SSID</th>
+                    <th>Sala</th>
+                    <th>Prédio</th>
+                    <th>Andar</th>
+                    <th>IP Range</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${aps.map(ap => `
+                    <tr>
+                        <td><code>${escapeHtml(ap.bssid)}</code></td
+                        <td>${escapeHtml(ap.ssid)}</td
+                        <td>${escapeHtml(ap.sala)}</td
+                        <td>${escapeHtml(ap.predio || '-')}</td
+                        <td>${ap.andar || '-'}</td
+                        <td>${ap.ip_range || '10.0.0.0/8'}</td
+                        <td>
+                            <div style="display:flex; gap:8px;">
+                                <button class="btn-sm btn-outline" onclick="editarAP(${ap.id})">
+                                    <i class="fas fa-edit"></i> Editar
+                                </button>
+                                <button class="btn-sm btn-danger" onclick="excluirAP(${ap.id})">
+                                    <i class="fas fa-trash"></i> Excluir
+                                </button>
+                            </div>
+                         </td
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+    `;
+}
+
+// ============================================
+// FUNÇÃO PARA EDITAR AP
+// ============================================
+
+window.editarAP = async (id) => {
+    try {
+        const aps = await apiGet('/admin/aps');
+        const ap = aps.find(a => a.id === id);
+        
+        if (!ap) {
+            showToast('Ponto de acesso não encontrado', 'error');
+            return;
+        }
+        
+        const modal = document.createElement('div');
+        modal.className = 'modal active';
+        modal.innerHTML = `
+            <div class="modal-content" style="max-width: 500px;">
+                <div class="modal-header">
+                    <h3><i class="fas fa-edit"></i> Editar Ponto de Acesso</h3>
+                    <span class="modal-close">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>BSSID (MAC do AP) *</label>
+                        <input type="text" id="editAPBssid" value="${escapeHtml(ap.bssid)}" placeholder="AA:BB:CC:DD:EE:FF" class="form-control">
+                        <small>Identificador único do roteador</small>
+                    </div>
+                    <div class="form-group">
+                        <label>SSID *</label>
+                        <input type="text" id="editAPSsid" value="${escapeHtml(ap.ssid)}" placeholder="Nome da rede Wi-Fi" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>Sala *</label>
+                        <input type="text" id="editAPSala" value="${escapeHtml(ap.sala)}" placeholder="Ex: Sala 101" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>Prédio</label>
+                        <input type="text" id="editAPPredio" value="${escapeHtml(ap.predio || '')}" placeholder="Ex: Bloco A" class="form-control">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Andar</label>
+                            <input type="number" id="editAPAndar" value="${ap.andar || ''}" placeholder="Andar" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label>IP Range</label>
+                            <input type="text" id="editAPIpRange" value="${ap.ip_range || '10.0.0.0/8'}" placeholder="Ex: 192.168.0.0/16" class="form-control">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Status</label>
+                        <select id="editAPAtivo" class="form-control">
+                            <option value="1" ${ap.ativo === 1 ? 'selected' : ''}>Ativo</option>
+                            <option value="0" ${ap.ativo === 0 ? 'selected' : ''}>Inativo</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="saveEditAPBtn" class="btn btn-primary">Salvar</button>
+                    <button class="btn btn-outline modal-close-btn">Cancelar</button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        const closeModal = () => modal.remove();
+        modal.querySelectorAll('.modal-close, .modal-close-btn').forEach(btn => {
+            btn.addEventListener('click', closeModal);
+        });
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeModal();
+        });
+        
+        document.getElementById('saveEditAPBtn').onclick = async () => {
+            const bssid = document.getElementById('editAPBssid').value.trim().toUpperCase();
+            const ssid = document.getElementById('editAPSsid').value.trim();
+            const sala = document.getElementById('editAPSala').value.trim();
+            const predio = document.getElementById('editAPPredio').value.trim();
+            const andar = document.getElementById('editAPAndar').value;
+            const ip_range = document.getElementById('editAPIpRange').value.trim();
+            const ativo = document.getElementById('editAPAtivo').value;
+            
+            if (!bssid || !ssid || !sala) {
+                showToast('Preencha BSSID, SSID e Sala', 'error');
+                return;
+            }
+            
+            // Validar formato do BSSID
+            const bssidRegex = /^([0-9A-F]{2}[:-]){5}([0-9A-F]{2})$/i;
+            if (!bssidRegex.test(bssid)) {
+                showToast('Formato de BSSID inválido. Use AA:BB:CC:DD:EE:FF', 'error');
+                return;
+            }
+            
+            try {
+                await apiPut(`/admin/aps/${id}`, { 
+                    bssid, 
+                    ssid, 
+                    sala, 
+                    predio, 
+                    andar: andar || null,
+                    ip_range: ip_range || '10.0.0.0/8',
+                    ativo: parseInt(ativo)
+                });
+                showToast('Ponto de acesso atualizado com sucesso!', 'success');
+                closeModal();
+                // Recarregar a lista
+                const content = document.getElementById('adminContent');
+                if (content) await window.carregarAdminAPs(content);
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+        };
+        
+    } catch (error) {
+        console.error('Erro:', error);
+        showToast('Erro ao carregar dados do AP', 'error');
+    }
+};
+
+// Função para excluir AP
+window.excluirAP = async (id) => {
+    if (confirm('⚠️ Tem certeza que deseja excluir este ponto de acesso? Esta ação não pode ser desfeita!')) {
+        try {
+            await apiDelete(`/admin/aps/${id}`);
+            showToast('Ponto de acesso excluído com sucesso!', 'success');
+            // Recarregar a lista
+            const content = document.getElementById('adminContent');
+            if (content) await window.carregarAdminAPs(content);
+        } catch (error) {
+            showToast(error.message, 'error');
+        }
+    }
+};
+
+console.log('✅ Funções de edição de APs adicionadas!');
+
+// ============================================
+// FUNÇÃO RENDERIZAR TABELA DE APs (com CSS consistente)
+// ============================================
+
+function renderizarTabelaAPs(aps) {
+    if (!aps.length) {
+        return '<div class="empty-state">Nenhum ponto de acesso cadastrado</div>';
+    }
+    
+    return `
+        <div style="overflow-x: auto;">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>BSSID</th>
+                        <th>SSID</th>
+                        <th>Sala</th>
+                        <th>Prédio</th>
+                        <th>Andar</th>
+                        <th>IP Range</th>
+                        <th>Status</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${aps.map(ap => `
+                        <tr>
+                            <td><code>${escapeHtml(ap.bssid)}</code></td>
+                            <td>${escapeHtml(ap.ssid)}</td>
+                            <td>${escapeHtml(ap.sala)}</td>
+                            <td>${escapeHtml(ap.predio || '-')}</td>
+                            <td>${ap.andar || '-'}</td>
+                            <td>${ap.ip_range || '10.0.0.0/8'}</td>
+                            <td>
+                                <span class="status-badge ${ap.ativo === 1 ? 'status-ativo' : 'status-inativo'}">
+                                    ${ap.ativo === 1 ? 'Ativo' : 'Inativo'}
+                                </span>
+                            </td>
+                            <td class="acoes">
+                                <button class="btn-sm btn-outline" onclick="editarAP(${ap.id})">
+                                    <i class="fas fa-edit"></i> Editar
+                                </button>
+                                <button class="btn-sm btn-danger" onclick="excluirAP(${ap.id})">
+                                    <i class="fas fa-trash"></i> Excluir
+                                </button>
+                            </td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        </div>
+    `;
+}
+
+console.log('✅ Tabela de APs com CSS consistente!');
