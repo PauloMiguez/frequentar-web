@@ -518,6 +518,109 @@ app.post('/api/wifi/config', authMiddleware, async (req, res) => {
 // INICIAR SERVIDOR
 // ============================================
 
+// ============================================
+// PRESENÇA AUTOMÁTICA POR WI-FI
+// ============================================
+app.post('/api/presenca/auto', async (req, res) => {
+    const { mac_address, ssid, bssid, client_ip } = req.body;
+    const hoje = new Date().toISOString().split('T')[0];
+    const agora = new Date().toTimeString().split(' ')[0];
+    
+    try {
+        console.log('📱 [PRESENCA_AUTO] Recebido:', { mac_address, ssid, bssid });
+        
+        // 1. Verificar se o dispositivo existe
+        const [usuarios] = await pool.query(
+            'SELECT id, nome, matricula FROM usuarios WHERE mac_address = ? AND perfil = "aluno" AND ativo = 1',
+            [mac_address]
+        );
+        
+        if (usuarios.length === 0) {
+            return res.status(404).json({ 
+                error: 'Dispositivo não cadastrado. Solicite ao administrador.',
+                code: 'DEVICE_NOT_FOUND'
+            });
+        }
+        
+        const aluno = usuarios[0];
+        console.log('✅ Aluno encontrado:', aluno.nome);
+        
+        // 2. Verificar ponto de acesso autorizado
+        const [aps] = await pool.query(
+            'SELECT * FROM access_points WHERE bssid = ? AND ssid = ? AND ativo = 1',
+            [bssid, ssid]
+        );
+        
+        if (aps.length === 0) {
+            return res.status(403).json({ 
+                error: 'Rede Wi-Fi não autorizada.',
+                code: 'UNAUTHORIZED_NETWORK'
+            });
+        }
+        
+        // 3. Verificar turma do aluno
+        const [turmasAluno] = await pool.query(`
+            SELECT t.id, t.nome, t.horario_inicio, t.horario_fim 
+            FROM alunos_turmas at
+            JOIN turmas t ON t.id = at.turma_id
+            WHERE at.aluno_id = ?
+        `, [aluno.id]);
+        
+        if (turmasAluno.length === 0) {
+            return res.status(404).json({ 
+                error: 'Aluno não vinculado a nenhuma turma',
+                code: 'NO_TURMA'
+            });
+        }
+        
+        const turma = turmasAluno[0];
+        
+        // 4. Validar horário
+        const agoraHora = parseFloat(agora.split(':')[0]) + parseFloat(agora.split(':')[1]) / 60;
+        const inicio = turma.horario_inicio ? parseFloat(turma.horario_inicio.split(':')[0]) + parseFloat(turma.horario_inicio.split(':')[1]) / 60 : 7;
+        const fim = turma.horario_fim ? parseFloat(turma.horario_fim.split(':')[0]) + parseFloat(turma.horario_fim.split(':')[1]) / 60 : 12;
+        
+        if (agoraHora < inicio || agoraHora > fim) {
+            return res.status(403).json({ 
+                error: `Fora do horário de aula. Horário: ${turma.horario_inicio || '07:00'} às ${turma.horario_fim || '12:00'}`,
+                code: 'OUT_OF_HOURS'
+            });
+        }
+        
+        // 5. Verificar se já registrou hoje
+        const [existe] = await pool.query(
+            'SELECT id FROM presenca WHERE aluno_id = ? AND data = ?',
+            [aluno.id, hoje]
+        );
+        
+        if (existe.length > 0) {
+            return res.json({ 
+                message: 'Presença já registrada hoje',
+                status: 'duplicado'
+            });
+        }
+        
+        // 6. Registrar presença
+        await pool.query(
+            `INSERT INTO presenca (aluno_id, turma_id, data, hora, tipo, status, observacao) 
+             VALUES (?, ?, ?, ?, 'wifi', 'presente', 'Registro automático')`,
+            [aluno.id, turma.id, hoje, agora]
+        );
+        
+        console.log(`✅ Presença registrada: ${aluno.nome} - ${turma.nome}`);
+        
+        res.json({ 
+            message: 'Presença registrada com sucesso!',
+            status: 'registrado',
+            aluno: { nome: aluno.nome, matricula: aluno.matricula }
+        });
+        
+    } catch (error) {
+        console.error('❌ Erro:', error);
+        res.status(500).json({ error: 'Erro interno ao registrar presença' });
+    }
+});
+
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Servidor rodando na porta ${PORT}`);
     console.log(`📱 API disponível em http://localhost:${PORT}/api`);
