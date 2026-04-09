@@ -1,4 +1,7 @@
 require('dotenv').config();
+
+// Configurar fuso horário para Brasília
+process.env.TZ = 'America/Sao_Paulo';
 const express = require('express');
 const cors = require('cors');
 const mysql = require('mysql2/promise');
