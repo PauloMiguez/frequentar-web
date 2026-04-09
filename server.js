@@ -628,3 +628,47 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Servidor rodando na porta ${PORT}`);
     console.log(`📱 API disponível em http://localhost:${PORT}/api`);
 });
+
+// ============================================
+// CONSULTAR PONTOS DE ACESSO AUTORIZADOS
+// ============================================
+
+// Endpoint para obter lista de redes Wi-Fi autorizadas (público)
+app.get('/api/wifi/redes-autorizadas', async (req, res) => {
+    try {
+        const [rows] = await pool.query(
+            'SELECT ssid, bssid, sala, predio FROM access_points WHERE ativo = 1'
+        );
+        res.json(rows);
+    } catch (error) {
+        console.error('Erro ao buscar redes autorizadas:', error);
+        res.status(500).json({ error: 'Erro ao buscar redes autorizadas' });
+    }
+});
+
+// Endpoint para verificar rede específica
+app.post('/api/wifi/validar-rede', async (req, res) => {
+    const { ssid, bssid } = req.body;
+    
+    try {
+        const [rows] = await pool.query(
+            'SELECT * FROM access_points WHERE ssid = ? AND bssid = ? AND ativo = 1',
+            [ssid, bssid]
+        );
+        
+        if (rows.length > 0) {
+            res.json({ 
+                autorizada: true, 
+                rede: rows[0],
+                message: `Rede autorizada: ${rows[0].ssid} (${rows[0].predio} - ${rows[0].sala})`
+            });
+        } else {
+            res.json({ 
+                autorizada: false, 
+                message: 'Rede Wi-Fi não autorizada. Conecte-se à rede da escola.'
+            });
+        }
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
