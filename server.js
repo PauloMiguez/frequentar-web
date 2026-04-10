@@ -14,6 +14,14 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
+// Servir arquivos estáticos (frontend web)
+app.use(express.static(__dirname));
+
+// Rota para a página inicial
+app.get('/', (req, res) => {
+    res.sendFile(__dirname + '/index.html');
+});
+
 // Configuração do MySQL (TiDB Cloud)
 const pool = mysql.createPool({
     host: process.env.DB_HOST || 'gateway01.us-east-1.prod.aws.tidbcloud.com',
