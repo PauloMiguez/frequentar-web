@@ -672,3 +672,25 @@ app.post('/api/wifi/validar-rede', async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
+
+// ============================================
+// BUSCAR PERFIL DO USUÁRIO (DADOS ATUALIZADOS)
+// ============================================
+
+app.get('/api/usuarios/perfil', authMiddleware, async (req, res) => {
+    try {
+        const [rows] = await pool.query(
+            'SELECT id, nome, email, matricula, perfil FROM usuarios WHERE id = ? AND ativo = 1',
+            [req.usuario.id]
+        );
+        
+        if (rows.length === 0) {
+            return res.status(404).json({ error: 'Usuário não encontrado' });
+        }
+        
+        res.json(rows[0]);
+    } catch (error) {
+        console.error('Erro ao buscar perfil:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
