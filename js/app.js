@@ -2770,3 +2770,117 @@ window.carregarAlunoConfig = async (container) => {
 };
 
 console.log('✅ Função carregarAlunoConfig corrigida!');
+
+// ============================================
+// MENU HAMBÚRGUER PARA DISPOSITIVOS MÓVEIS
+// ============================================
+
+function initMobileMenu() {
+    // Verificar se já existe o menu
+    if (document.querySelector('.menu-hamburger')) return;
+    
+    // Criar botão hambúrguer
+    const hamburger = document.createElement('button');
+    hamburger.className = 'menu-hamburger';
+    hamburger.innerHTML = '<span></span><span></span><span></span>';
+    hamburger.onclick = toggleMobileSidebar;
+    document.body.appendChild(hamburger);
+    
+    // Criar overlay
+    const overlay = document.createElement('div');
+    overlay.className = 'sidebar-mobile-overlay';
+    overlay.onclick = closeMobileSidebar;
+    document.body.appendChild(overlay);
+    
+    // Criar sidebar mobile
+    const sidebar = document.createElement('div');
+    sidebar.className = 'sidebar-mobile';
+    sidebar.id = 'mobileSidebar';
+    
+    // Copiar conteúdo da sidebar existente
+    const originalSidebar = document.querySelector('.sidebar, .sidebar-desktop');
+    if (originalSidebar) {
+        sidebar.innerHTML = originalSidebar.innerHTML;
+    } else {
+        // Criar estrutura básica
+        sidebar.innerHTML = `
+            <div class="sidebar-header">
+                <h3>Frequentar</h3>
+            </div>
+            <div class="sidebar-nav" id="mobileNav">
+                <!-- Itens serão preenchidos dinamicamente -->
+            </div>
+        `;
+    }
+    
+    document.body.appendChild(sidebar);
+    
+    // Criar botão de logout flutuante
+    const logoutBtn = document.createElement('button');
+    logoutBtn.className = 'logout-mobile';
+    logoutBtn.innerHTML = '🚪';
+    logoutBtn.title = 'Sair';
+    logoutBtn.onclick = () => {
+        if (typeof logout === 'function') {
+            logout();
+        } else if (typeof fazerLogout === 'function') {
+            fazerLogout();
+        }
+    };
+    document.body.appendChild(logoutBtn);
+    
+    // Preencher navegação com base nas abas atuais
+    updateMobileNavigation();
+}
+
+function toggleMobileSidebar() {
+    const sidebar = document.getElementById('mobileSidebar');
+    const overlay = document.querySelector('.sidebar-mobile-overlay');
+    if (sidebar) {
+        sidebar.classList.toggle('open');
+        if (overlay) overlay.style.display = sidebar.classList.contains('open') ? 'block' : 'none';
+    }
+}
+
+function closeMobileSidebar() {
+    const sidebar = document.getElementById('mobileSidebar');
+    const overlay = document.querySelector('.sidebar-mobile-overlay');
+    if (sidebar) {
+        sidebar.classList.remove('open');
+        if (overlay) overlay.style.display = 'none';
+    }
+}
+
+function updateMobileNavigation() {
+    const navContainer = document.querySelector('#mobileSidebar .sidebar-nav');
+    if (!navContainer) return;
+    
+    // Pegar os itens de navegação da sidebar original
+    const originalNavItems = document.querySelectorAll('.sidebar .nav-item, .sidebar-desktop .nav-item');
+    
+    if (originalNavItems.length > 0) {
+        navContainer.innerHTML = '';
+        originalNavItems.forEach(item => {
+            const clone = item.cloneNode(true);
+            clone.onclick = (e) => {
+                e.preventDefault();
+                if (item.onclick) item.onclick(e);
+                closeMobileSidebar();
+            };
+            navContainer.appendChild(clone);
+        });
+    }
+}
+
+// Inicializar quando o DOM estiver pronto
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initMobileMenu);
+} else {
+    initMobileMenu();
+}
+
+// Observar mudanças na sidebar para atualizar menu mobile
+const observer = new MutationObserver(() => {
+    updateMobileNavigation();
+});
+observer.observe(document.body, { childList: true, subtree: true });
