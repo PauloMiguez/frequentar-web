@@ -1048,3 +1048,313 @@ label {
         gap: 5px;
     }
 }
+
+/* ============================================
+   MELHORIAS ADICIONAIS DE RESPONSIVIDADE
+   ============================================ */
+
+/* Smartphones pequenos (até 380px) */
+@media (max-width: 380px) {
+    .login-card {
+        padding: 25px 15px;
+    }
+    
+    .logo h1 {
+        font-size: 22px;
+    }
+    
+    .stats-grid {
+        gap: 10px;
+    }
+    
+    .stat-card {
+        padding: 12px;
+    }
+    
+    .stat-number {
+        font-size: 24px;
+    }
+    
+    .btn {
+        padding: 8px 12px;
+        font-size: 13px;
+    }
+    
+    .modal-content {
+        padding: 15px;
+    }
+}
+
+/* Smartphones médios (381px - 480px) */
+@media (min-width: 381px) and (max-width: 480px) {
+    .login-card {
+        padding: 30px 20px;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+    
+    .stat-card {
+        padding: 15px;
+    }
+    
+    .card-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .action-buttons {
+        width: 100%;
+        justify-content: flex-start;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+    }
+    
+    .form-actions button {
+        width: 100%;
+        margin: 5px 0;
+    }
+}
+
+/* Tablets (481px - 768px) - melhorias */
+@media (min-width: 481px) and (max-width: 768px) {
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+    }
+    
+    .turmas-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .sidebar {
+        width: 260px;
+    }
+    
+    .main-content {
+        margin-left: 0;
+    }
+    
+    .sidebar.mobile-open + .main-content {
+        margin-left: 260px;
+    }
+}
+
+/* Telas médias (769px - 1024px) */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .turmas-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .container {
+        max-width: 960px;
+        margin: 0 auto;
+    }
+}
+
+/* Ajustes para navegação mobile */
+@media (max-width: 768px) {
+    .menu-toggle {
+        display: block;
+        position: fixed;
+        top: 15px;
+        left: 15px;
+        z-index: 1001;
+        background: #0a2b4e;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 10px;
+        cursor: pointer;
+    }
+    
+    .sidebar {
+        position: fixed;
+        left: -280px;
+        top: 0;
+        width: 280px;
+        height: 100%;
+        transition: left 0.3s ease;
+        z-index: 1000;
+    }
+    
+    .sidebar.open {
+        left: 0;
+    }
+    
+    .main-content {
+        padding-top: 60px;
+    }
+}
+
+/* Ajustes para tabelas em mobile */
+@media (max-width: 768px) {
+    .data-table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+    
+    .data-table thead {
+        display: table-header-group;
+    }
+    
+    .data-table tbody {
+        display: table-row-group;
+    }
+    
+    .data-table tr {
+        display: table-row;
+    }
+    
+    .data-table td, 
+    .data-table th {
+        display: table-cell;
+        padding: 10px 8px;
+    }
+}
+
+/* Ajustes para cards de turmas */
+@media (max-width: 768px) {
+    .turma-card {
+        margin: 10px;
+    }
+    
+    .turma-header {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .turma-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .turma-actions button {
+        width: 100%;
+        margin: 5px 0;
+    }
+}
+
+/* Ajustes para filtros e busca */
+@media (max-width: 768px) {
+    .filter-bar {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .filter-bar input,
+    .filter-bar select,
+    .filter-bar button {
+        width: 100%;
+        margin: 0;
+    }
+    
+    .search-box {
+        width: 100%;
+    }
+    
+    .search-box input {
+        width: 100%;
+    }
+}
+
+/* Ajustes para botões de ação */
+@media (max-width: 480px) {
+    .btn-group {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .btn-group button {
+        width: 100%;
+    }
+    
+    .table-actions {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .table-actions button {
+        width: 100%;
+    }
+}
+
+/* Ajustes para inputs e formulários */
+@media (max-width: 480px) {
+    input, select, textarea {
+        font-size: 16px; /* Previne zoom automático no iOS */
+    }
+    
+    .form-row {
+        flex-direction: column;
+    }
+    
+    .form-row .form-group {
+        width: 100%;
+        margin-right: 0;
+    }
+}
+
+/* Ajustes para modais */
+@media (max-width: 480px) {
+    .modal-content {
+        width: 95%;
+        margin: 10% auto;
+        max-height: 80vh;
+        overflow-y: auto;
+    }
+    
+    .modal-body {
+        padding: 15px;
+    }
+    
+    .modal-footer {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .modal-footer button {
+        width: 100%;
+    }
+}
+
+/* Ajustes para o dashboard */
+@media (max-width: 768px) {
+    .dashboard-header {
+        flex-direction: column;
+        text-align: center;
+        gap: 15px;
+    }
+    
+    .welcome-text h2 {
+        font-size: 20px;
+    }
+    
+    .date-info {
+        text-align: center;
+    }
+}
+
+/* Ajustes para mensagens e alertas */
+@media (max-width: 480px) {
+    .alert {
+        padding: 12px;
+        font-size: 13px;
+    }
+    
+    .toast {
+        width: 90%;
+        right: 5%;
+        left: 5%;
+    }
+}
