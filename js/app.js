@@ -2770,36 +2770,3 @@ window.carregarAlunoConfig = async (container) => {
 };
 
 console.log('✅ Função carregarAlunoConfig corrigida!');
-
-// ============================================
-// SIMPLES MENU MOBILE - VERSÃO SEGURA
-// ============================================
-if (window.innerWidth <= 768) {
-    window.addEventListener('load', function() {
-        // Adicionar classe mobile ao body
-        document.body.classList.add('mobile-view');
-        
-        // Criar botão de menu simples
-        var btn = document.createElement('button');
-        btn.innerHTML = '☰';
-        btn.style.cssText = 'position:fixed;top:10px;left:10px;z-index:9999;background:#0a2b4e;color:#fff;border:none;border-radius:5px;padding:10px 15px;font-size:20px;cursor:pointer';
-        btn.onclick = function() {
-            var sidebar = document.querySelector('.sidebar');
-            if (sidebar) {
-                sidebar.style.display = sidebar.style.display === 'none' ? 'block' : 'none';
-            }
-        };
-        document.body.appendChild(btn);
-        
-        // Botão sair flutuante
-        var sair = document.createElement('button');
-        sair.innerHTML = '🚪 Sair';
-        sair.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:9999;background:#dc3545;color:#fff;border:none;border-radius:20px;padding:10px 15px;cursor:pointer';
-        sair.onclick = function() {
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-            window.location.reload();
-        };
-        document.body.appendChild(sair);
-    });
-}
