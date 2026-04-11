@@ -2772,115 +2772,34 @@ window.carregarAlunoConfig = async (container) => {
 console.log('✅ Função carregarAlunoConfig corrigida!');
 
 // ============================================
-// MENU HAMBÚRGUER PARA DISPOSITIVOS MÓVEIS
+// SIMPLES MENU MOBILE - VERSÃO SEGURA
 // ============================================
-
-function initMobileMenu() {
-    // Verificar se já existe o menu
-    if (document.querySelector('.menu-hamburger')) return;
-    
-    // Criar botão hambúrguer
-    const hamburger = document.createElement('button');
-    hamburger.className = 'menu-hamburger';
-    hamburger.innerHTML = '<span></span><span></span><span></span>';
-    hamburger.onclick = toggleMobileSidebar;
-    document.body.appendChild(hamburger);
-    
-    // Criar overlay
-    const overlay = document.createElement('div');
-    overlay.className = 'sidebar-mobile-overlay';
-    overlay.onclick = closeMobileSidebar;
-    document.body.appendChild(overlay);
-    
-    // Criar sidebar mobile
-    const sidebar = document.createElement('div');
-    sidebar.className = 'sidebar-mobile';
-    sidebar.id = 'mobileSidebar';
-    
-    // Copiar conteúdo da sidebar existente
-    const originalSidebar = document.querySelector('.sidebar, .sidebar-desktop');
-    if (originalSidebar) {
-        sidebar.innerHTML = originalSidebar.innerHTML;
-    } else {
-        // Criar estrutura básica
-        sidebar.innerHTML = `
-            <div class="sidebar-header">
-                <h3>Frequentar</h3>
-            </div>
-            <div class="sidebar-nav" id="mobileNav">
-                <!-- Itens serão preenchidos dinamicamente -->
-            </div>
-        `;
-    }
-    
-    document.body.appendChild(sidebar);
-    
-    // Criar botão de logout flutuante
-    const logoutBtn = document.createElement('button');
-    logoutBtn.className = 'logout-mobile';
-    logoutBtn.innerHTML = '🚪';
-    logoutBtn.title = 'Sair';
-    logoutBtn.onclick = () => {
-        if (typeof logout === 'function') {
-            logout();
-        } else if (typeof fazerLogout === 'function') {
-            fazerLogout();
-        }
-    };
-    document.body.appendChild(logoutBtn);
-    
-    // Preencher navegação com base nas abas atuais
-    updateMobileNavigation();
+if (window.innerWidth <= 768) {
+    window.addEventListener('load', function() {
+        // Adicionar classe mobile ao body
+        document.body.classList.add('mobile-view');
+        
+        // Criar botão de menu simples
+        var btn = document.createElement('button');
+        btn.innerHTML = '☰';
+        btn.style.cssText = 'position:fixed;top:10px;left:10px;z-index:9999;background:#0a2b4e;color:#fff;border:none;border-radius:5px;padding:10px 15px;font-size:20px;cursor:pointer';
+        btn.onclick = function() {
+            var sidebar = document.querySelector('.sidebar');
+            if (sidebar) {
+                sidebar.style.display = sidebar.style.display === 'none' ? 'block' : 'none';
+            }
+        };
+        document.body.appendChild(btn);
+        
+        // Botão sair flutuante
+        var sair = document.createElement('button');
+        sair.innerHTML = '🚪 Sair';
+        sair.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:9999;background:#dc3545;color:#fff;border:none;border-radius:20px;padding:10px 15px;cursor:pointer';
+        sair.onclick = function() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.reload();
+        };
+        document.body.appendChild(sair);
+    });
 }
-
-function toggleMobileSidebar() {
-    const sidebar = document.getElementById('mobileSidebar');
-    const overlay = document.querySelector('.sidebar-mobile-overlay');
-    if (sidebar) {
-        sidebar.classList.toggle('open');
-        if (overlay) overlay.style.display = sidebar.classList.contains('open') ? 'block' : 'none';
-    }
-}
-
-function closeMobileSidebar() {
-    const sidebar = document.getElementById('mobileSidebar');
-    const overlay = document.querySelector('.sidebar-mobile-overlay');
-    if (sidebar) {
-        sidebar.classList.remove('open');
-        if (overlay) overlay.style.display = 'none';
-    }
-}
-
-function updateMobileNavigation() {
-    const navContainer = document.querySelector('#mobileSidebar .sidebar-nav');
-    if (!navContainer) return;
-    
-    // Pegar os itens de navegação da sidebar original
-    const originalNavItems = document.querySelectorAll('.sidebar .nav-item, .sidebar-desktop .nav-item');
-    
-    if (originalNavItems.length > 0) {
-        navContainer.innerHTML = '';
-        originalNavItems.forEach(item => {
-            const clone = item.cloneNode(true);
-            clone.onclick = (e) => {
-                e.preventDefault();
-                if (item.onclick) item.onclick(e);
-                closeMobileSidebar();
-            };
-            navContainer.appendChild(clone);
-        });
-    }
-}
-
-// Inicializar quando o DOM estiver pronto
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initMobileMenu);
-} else {
-    initMobileMenu();
-}
-
-// Observar mudanças na sidebar para atualizar menu mobile
-const observer = new MutationObserver(() => {
-    updateMobileNavigation();
-});
-observer.observe(document.body, { childList: true, subtree: true });
