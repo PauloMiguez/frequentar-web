@@ -11,7 +11,19 @@ const jwt = require('jsonwebtoken');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(cors());
+// Configuração CORS
+const corsOptions = {
+  origin: [
+    'https://frequentar-web.onrender.com',
+    'https://poetic-dango-a5c32a.netlify.app',
+    'http://localhost:3000',
+    'http://localhost:8081'
+  ],
+  credentials: true,
+  optionsSuccessStatus: 200
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // Servir arquivos estáticos (frontend web)
