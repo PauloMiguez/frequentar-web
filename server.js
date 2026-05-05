@@ -570,7 +570,7 @@ app.post('/api/presenca/auto', async (req, res) => {
         
         // 2. Verificar ponto de acesso autorizado
         const [aps] = await pool.query(
-            'SELECT * FROM access_points WHERE bssid = ? AND ssid = ? AND ativo = 1',
+            'SELECT * FROM access_points WHERE LOWER(bssid) = LOWER(?) AND ssid = ? AND ativo = 1',
             [bssid, ssid]
         );
         
@@ -672,7 +672,7 @@ app.post('/api/wifi/validar-rede', async (req, res) => {
     
     try {
         const [rows] = await pool.query(
-            'SELECT * FROM access_points WHERE ssid = ? AND bssid = ? AND ativo = 1',
+            'SELECT * FROM access_points WHERE ssid = ? AND LOWER(bssid) = LOWER(?) AND ativo = 1',
             [ssid, bssid]
         );
         
