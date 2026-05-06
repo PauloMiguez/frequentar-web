@@ -218,42 +218,23 @@ async function carregarAdminAPs(container) {
 async function carregarAdminPresenca(container) {
     try {
         const presencas = await apiGet('/admin/relatorios');
-        let tabelaHTML = `
-            <div class="card">
-                <h3>Registros de Presença</h3>
-                <div style="overflow-x: auto;">
-                    <table class="data-table" style="width:100%">
-                        <thead>
-                            <tr>
-                                <th>Aluno</th>
-                                <th>Matrícula</th>
-                                <th>Data/Hora</th>
-                                <th>Turma</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-        `;
         
-        for (const p of presencas) {
+        let linhas = '';
+        for (let i = 0; i < presencas.length; i++) {
+            const p = presencas[i];
             const dataHora = p.data_formatada ? `${p.data_formatada} ${p.hora}` : '-';
-            tabelaHTML += `
+            linhas += `
                 <tr>
-                    <td>${escapeHtml(p.nome_aluno)}</td
-                    <td>${escapeHtml(p.matricula)}</td
-                    <td>${dataHora}</td
-                    <td>${escapeHtml(p.turma_nome || '-')}</td
-                    <td class="status-presente">Presente</td
+                    <td>${escapeHtml(p.nome_aluno)}</td>
+                    <td>${escapeHtml(p.matricula)}</td>
+                    <td>${dataHora}</td>
+                    <td>${escapeHtml(p.turma_nome || '-')}</td>
+                    <td class="status-presente">Presente</td>
                 </tr>
             `;
         }
         
-        tabelaHTML += `
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        `;
+        const tabelaHTML = '<div class="card"><h3>Registros de Presença</h3><div style="overflow-x: auto;"><table class="data-table" style="width:100%"><thead><tr><th>Aluno</th><th>Matrícula</th><th>Data/Hora</th><th>Turma</th><th>Status</th></tr></thead><tbody>' + linhas + '</tbody></table></div></div>';
         
         container.innerHTML = tabelaHTML;
     } catch (error) { 
@@ -261,7 +242,6 @@ async function carregarAdminPresenca(container) {
         container.innerHTML = '<div class="error">Erro ao carregar presenças</div>'; 
     }
 }
-
 async function carregarAdminRelatorios(container) {
     try {
         const turmas = await apiGet('/turmas');
