@@ -606,41 +606,27 @@ function renderizarTabelaAlunos(alunos) {
     `;
 }
 function renderizarTabelaProfessores(professores) {
-    if (!professores || !professores.length) return '<p>Nenhum professor cadastrado</p>';
-    
-    let html = `
-        <table class="data-table">
-            <thead>
-                <tr>
-                    <th>Nome</th>
-                    <th>Matrícula</th>
-                    <th>E-mail</th>
-                    <th>Ações</th>
-                </tr>
-            </thead>
-            <tbody>
-    `;
-    
-    for (const p of professores) {
-        html += `
-            <tr>
-                <td>${escapeHtml(p.nome)}</td
-                <td>${escapeHtml(p.matricula)}</td
-                <td>${escapeHtml(p.email)}</td
-                <td>
-                    <button class="btn-sm btn-outline" onclick="editarProfessor(${p.id})">✏️ Editar</button>
-                    <button class="btn-sm btn-danger" onclick="excluirProfessor(${p.id})">🗑️ Excluir</button>
-                 </td
-            </tr>
-        `;
+    if (!professores || !professores.length) {
+        return '<p>Nenhum professor cadastrado</p>';
     }
     
-    html += `
-            </tbody>
-        </table>
-    `;
+    let tabela = '<table class="data-table">';
+    tabela += '<thead><tr><th>Nome</th><th>Matrícula</th><th>E-mail</th><th>Ações</th></tr></thead>';
+    tabela += '<tbody>';
     
-    return html;
+    for (let i = 0; i < professores.length; i++) {
+        const p = professores[i];
+        tabela += '<tr>';
+        tabela += '<td>' + escapeHtml(p.nome) + '</td>';
+        tabela += '<td>' + escapeHtml(p.matricula) + '</td>';
+        tabela += '<td>' + escapeHtml(p.email) + '</td>';
+        tabela += '<td><button class="btn-sm btn-outline" onclick="editarProfessor(' + p.id + ')">✏️ Editar</button> ';
+        tabela += '<button class="btn-sm btn-danger" onclick="excluirProfessor(' + p.id + ')">🗑️ Excluir</button></td>';
+        tabela += '</tr>';
+    }
+    
+    tabela += '</tbody></table>';
+    return tabela;
 }
 
 function renderizarTabelaTurmas(turmas) {
