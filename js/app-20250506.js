@@ -217,34 +217,6 @@ async function carregarAdminProfessores(container) {
     }
 }
 
-async function cadastrarProfessor() {
-    const nome = document.getElementById('novoProfNome')?.value.trim();
-    const email = document.getElementById('novoProfEmail')?.value.trim();
-    const matricula = document.getElementById('novoProfMatricula')?.value.trim();
-    const senha = document.getElementById('novoProfSenha')?.value.trim();
-    
-    if (!nome || !email || !matricula) {
-        showToast('Preencha todos os campos', 'error');
-        return;
-    }
-    
-    try {
-        const response = await apiPost('/admin/professores', { nome, email, matricula, senha: senha || undefined });
-        const senhaMsg = response.message.includes('Senha:') ? ` A senha é: ${response.message.split('Senha:')[1]}` : '';
-        showToast(`Professor cadastrado com sucesso!${senhaMsg}`, 'success');
-        
-        document.getElementById('novoProfNome').value = '';
-        document.getElementById('novoProfEmail').value = '';
-        document.getElementById('novoProfMatricula').value = '';
-        if (document.getElementById('novoProfSenha')) document.getElementById('novoProfSenha').value = '';
-        
-        const content = document.getElementById('adminContent');
-        if (content) await carregarAdminProfessores(content);
-    } catch (error) {
-        showToast(error.message, 'error');
-    }
-}
-
 async function carregarAdminTurmas(container) {
     try {
         const turmas = await apiGet('/turmas');
