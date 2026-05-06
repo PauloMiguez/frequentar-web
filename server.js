@@ -70,15 +70,23 @@ const authMiddleware = async (req, res, next) => {
 // ============================================
 
 app.post('/api/login-multi', async (req, res) => {
-    const { email, password, perfil } = req.body;
+    const { email, password, perfil, mac_address } = req.body;
     try {
         const [rows] = await pool.query('SELECT * FROM usuarios WHERE email = ? AND perfil = ?', [email, perfil]);
         if (rows.length === 0) return res.status(401).json({ error: 'Credenciais inválidas' });
         const usuario = rows[0];
         const validPassword = await bcrypt.compare(password, usuario.senha_hash);
         if (!validPassword) return res.status(401).json({ error: 'Credenciais inválidas' });
+        
+        // Se for aluno e forneceu MAC address, atualizar
+        if (perfil === 'aluno' && mac_address && !usuario.mac_address) {
+            await pool.query('UPDATE usuarios SET mac_address = ? WHERE id = ?', [mac_address, usuario.id]);
+            usuario.mac_address = mac_address;
+            console.log(`📱 MAC address associado ao aluno ${usuario.nome}: ${mac_address}`);
+        }
+        
         const token = jwt.sign({ id: usuario.id, email: usuario.email, perfil: usuario.perfil }, process.env.JWT_SECRET || 'secret_key_2024', { expiresIn: '24h' });
-        res.json({ token, usuario: { id: usuario.id, nome: usuario.nome, email: usuario.email, perfil: usuario.perfil, matricula: usuario.matricula } });
+        res.json({ token, usuario: { id: usuario.id, nome: usuario.nome, email: usuario.email, perfil: usuario.perfil, matricula: usuario.matricula, mac_address: usuario.mac_address } });
     } catch (error) { res.status(500).json({ error: error.message }); }
 });
 
