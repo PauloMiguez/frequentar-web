@@ -223,24 +223,39 @@ async function carregarAdminPresenca(container) {
                 <h3>Registros de Presença</h3>
                 <div style="overflow-x: auto;">
                     <table class="data-table" style="width:100%">
-                        <thead><tr><th>Aluno</th><th>Matrícula</th><th>Data/Hora</th><th>Turma</th><th>Status</th></tr></thead>
+                        <thead>
+                            <tr>
+                                <th>Aluno</th>
+                                <th>Matrícula</th>
+                                <th>Data/Hora</th>
+                                <th>Turma</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
                         <tbody>
                             ${presencas.map(p => {
-                                let dataHora = '-';
-                                if (p.created_at) {
-                                    const d = new Date(p.created_at);
-                                    dataHora = `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')}/${d.getFullYear()} ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
-                                }
-                                return `<tr><td>${escapeHtml(p.nome_aluno)}</td><td>${escapeHtml(p.matricula)}</td><td>${dataHora}</td><td>${escapeHtml(p.turma_nome || '-')}</td><td class="status-presente">Presente</td></tr>`;
+                                // Usar data_formatada e hora (já estão no fuso correto)
+                                const dataHora = p.data_formatada ? `${p.data_formatada} ${p.hora}` : '-';
+                                return `
+                                    <tr>
+                                        <td>${escapeHtml(p.nome_aluno)}</td
+                                        <td>${escapeHtml(p.matricula)}</td
+                                        <td>${dataHora}</td
+                                        <td>${escapeHtml(p.turma_nome || '-')}</td
+                                        <td class="status-presente">Presente</td
+                                    </tr>
+                                `;
                             }).join('')}
                         </tbody>
                     </table>
                 </div>
             </div>
         `;
-    } catch (error) { container.innerHTML = '<div class="error">Erro ao carregar presenças</div>'; }
+    } catch (error) { 
+        console.error('Erro:', error);
+        container.innerHTML = '<div class="error">Erro ao carregar presenças</div>'; 
+    }
 }
-
 async function carregarAdminRelatorios(container) {
     try {
         const turmas = await apiGet('/turmas');
