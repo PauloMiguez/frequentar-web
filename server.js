@@ -668,6 +668,35 @@ app.post('/api/presenca/auto', async (req, res) => {
     }
 });
 
+// ============================================
+// REDEFINIR SENHA DO USUÁRIO (ADMIN)
+// ============================================
+
+app.put('/api/admin/usuarios/:id/senha', authMiddleware, async (req, res) => {
+    if (req.usuario.perfil !== 'admin') return res.status(403).json({ error: 'Acesso negado' });
+    const { id } = req.params;
+    const { senha } = req.body;
+    
+    if (!senha || senha.length < 4) {
+        return res.status(400).json({ error: 'Senha deve ter pelo menos 4 caracteres' });
+    }
+    
+    try {
+        const senhaHash = await bcrypt.hash(senha, 10);
+        const [result] = await pool.query('UPDATE usuarios SET senha_hash = ? WHERE id = ?', [senhaHash, id]);
+        
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: 'Usuário não encontrado' });
+        }
+        
+        console.log(`✅ Senha redefinida para usuário ID ${id}`);
+        res.json({ message: `Senha redefinida com sucesso para: ${senha}` });
+    } catch (error) {
+        console.error('Erro ao redefinir senha:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Servidor rodando na porta ${PORT}`);
     console.log(`📱 API disponível em http://localhost:${PORT}/api`);
@@ -757,6 +786,29 @@ app.get('/api/usuarios/perfil', authMiddleware, async (req, res) => {
         res.json(rows[0]);
     } catch (error) {
         console.error('Erro ao buscar perfil:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// ============================================
+// REDEFINIR SENHA DO USUÁRIO (ADMIN)
+// ============================================
+
+app.put('/api/admin/usuarios/:id/senha', authMiddleware, async (req, res) => {
+    if (req.usuario.perfil !== 'admin') return res.status(403).json({ error: 'Acesso negado' });
+    const { id } = req.params;
+    const { senha } = req.body;
+    
+    if (!senha || senha.length < 4) {
+        return res.status(400).json({ error: 'Senha deve ter pelo menos 4 caracteres' });
+    }
+    
+    try {
+        const senhaHash = await bcrypt.hash(senha, 10);
+        await pool.query('UPDATE usuarios SET senha_hash = ? WHERE id = ?', [senhaHash, id]);
+        res.json({ message: `Senha redefinida com sucesso para: ${senha}` });
+    } catch (error) {
+        console.error('Erro ao redefinir senha:', error);
         res.status(500).json({ error: error.message });
     }
 });
