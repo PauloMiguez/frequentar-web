@@ -346,11 +346,18 @@ app.get('/api/admin/relatorios', authMiddleware, async (req, res) => {
     if (req.usuario.perfil !== 'admin') return res.status(403).json({ error: 'Acesso negado' });
     try {
         const [rows] = await pool.query(`
-            SELECT p.*, u.nome as nome_aluno, u.matricula, t.nome as turma_nome
+            SELECT 
+                u.nome as nome_aluno, 
+                u.matricula, 
+                p.data,
+                p.hora,
+                t.nome as turma_nome,
+                p.status,
+                CONCAT(p.data, ' ', p.hora) as data_hora
             FROM presenca p
             JOIN usuarios u ON u.id = p.aluno_id
             LEFT JOIN turmas t ON t.id = p.turma_id
-            ORDER BY p.created_at DESC
+            ORDER BY p.data DESC, p.hora DESC
         `);
         res.json(rows);
     } catch (error) { res.status(500).json({ error: error.message }); }
