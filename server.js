@@ -352,20 +352,14 @@ app.get('/api/admin/relatorios', authMiddleware, async (req, res) => {
                 DATE_FORMAT(p.data, '%d/%m/%Y') as data_formatada,
                 p.hora,
                 t.nome as turma_nome,
-                p.status
+                p.status,
+                CONCAT(DATE_FORMAT(p.data, '%d/%m/%Y'), ' ', p.hora) as data_hora
             FROM presenca p
             JOIN usuarios u ON u.id = p.aluno_id
             LEFT JOIN turmas t ON t.id = p.turma_id
             ORDER BY p.data DESC, p.hora DESC
         `);
-        
-        // Formatar a data/hora para exibição
-        const resultados = rows.map(row => ({
-            ...row,
-            data_hora: `${row.data_formatada} ${row.hora}`
-        }));
-        
-        res.json(resultados);
+        res.json(rows);
     } catch (error) { 
         console.error('Erro no relatório:', error);
         res.status(500).json({ error: error.message }); 
