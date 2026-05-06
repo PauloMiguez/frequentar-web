@@ -259,30 +259,30 @@ async function carregarAdminRelatorios(container) {
             if (params.length) url += `?${params.join('&')}`;
             const relatorio = await apiGet(url);
             document.getElementById('relatorioResultado').innerHTML = `
-    <h4>Resultado</h4>
-    <table class="data-table">
-        <thead>
-            <tr>
-                <th>Aluno</th>
-                <th>Matrícula</th>
-                <th>Data/Hora</th>
-                <th>Turma</th>
-                <th>Status</th>
-            </tr>
-        </thead>
-        <tbody>
-            ${relatorio.map(r => `
-                <tr>
-                    <td>${escapeHtml(r.nome_aluno)}</td>
-                    <td>${escapeHtml(r.matricula)}</td>
-                    <td>${r.data_formatada ? `${r.data_formatada} ${r.hora}` : '-'}</td>
-                    <td>${escapeHtml(r.turma_nome)}</td>
-                    <td>${r.status === 'presente' ? 'Presente' : 'Ausente'}</td>
-                </tr>
-            `).join('')}
-        </tbody>
-    </table>
-`;
+                <h4>Resultado</h4>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Aluno</th>
+                            <th>Matrícula</th>
+                            <th>Data/Hora</th>
+                            <th>Turma</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${relatorio.map(r => `
+                            <tr>
+                                <td>${escapeHtml(r.nome_aluno)}</td>
+                                <td>${escapeHtml(r.matricula)}</td>
+                                <td>${r.data_hora || '-'}</td>
+                                <td>${escapeHtml(r.turma_nome)}</td>
+                                <td>${r.status === 'presente' ? 'Presente' : 'Ausente'}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
         };
     } catch (error) { container.innerHTML = '<div class="error">Erro ao carregar relatórios</div>'; }
 }
