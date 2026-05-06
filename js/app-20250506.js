@@ -130,43 +130,57 @@ async function carregarAdminAlunos(container) {
         const alunos = await apiGet('/admin/alunos');
         const turmas = await apiGet('/turmas');
         container.innerHTML = `
-            <div class="card"><h3>Cadastrar Aluno</h3><div class="form-row"><input type="text" id="novoAlunoNome" placeholder="Nome"><input type="text" id="novoAlunoMatricula" placeholder="Matrícula"></div><div class="form-row"><input type="email" id="novoAlunoEmail" placeholder="E-mail"><select id="novoAlunoTurma">${turmas.map(t => `<option value="${t.id}">${escapeHtml(t.nome)}</option>`).join('')}</select></div><button id="salvarAlunoBtn" class="btn btn-primary">Cadastrar</button></div>
-            <div class="card"><h3>Lista de Alunos</h3><div id="listaAlunos">${renderizarTabelaAlunos(alunos)}</div></div>
+            <div class="card">
+                <h3>Cadastrar Aluno</h3>
+                <div class="form-row">
+                    <input type="text" id="novoAlunoNome" placeholder="Nome">
+                    <input type="text" id="novoAlunoMatricula" placeholder="Matrícula">
+                </div>
+                <div class="form-row">
+                    <input type="email" id="novoAlunoEmail" placeholder="E-mail">
+                    <select id="novoAlunoTurma">
+                        <option value="">Selecionar Turma (opcional)</option>
+                        ${turmas.map(t => `<option value="${t.id}">${escapeHtml(t.nome)}</option>`).join('')}
+                    </select>
+                </div>
+                <button id="salvarAlunoBtn" class="btn btn-primary">Cadastrar Aluno</button>
+            </div>
+            <div class="card">
+                <h3>Lista de Alunos</h3>
+                <div id="listaAlunos">${renderizarTabelaAlunos(alunos)}</div>
+            </div>
         `;
-        document.getElementById('salvarAlunoBtn').onclick = async () => {
-            const nome = document.getElementById('novoAlunoNome').value.trim();
-            const matricula = document.getElementById('novoAlunoMatricula').value.trim();
-            const email = document.getElementById('novoAlunoEmail').value.trim();
-            const turmaId = document.getElementById('novoAlunoTurma').value;
-            if (!nome || !matricula || !email) { showToast('Preencha todos os campos', 'error'); return; }
-            try {
-                await apiPost('/admin/alunos', { nome, matricula, email, turmaId: turmaId || null });
-                showToast('Aluno cadastrado!', 'success');
-                await carregarAdminAlunos(container);
-            } catch (error) { showToast(error.message, 'error'); }
-        };
-    } catch (error) { container.innerHTML = '<div class="error">Erro ao carregar alunos</div>'; }
+        document.getElementById('salvarAlunoBtn').onclick = cadastrarAluno;
+    } catch (error) { 
+        container.innerHTML = '<div class="error">Erro ao carregar alunos</div>';
+        console.error('Erro:', error);
+    }
 }
-
 async function carregarAdminProfessores(container) {
     try {
         const professores = await apiGet('/admin/professores');
         container.innerHTML = `
-            <div class="card"><h3>Cadastrar Professor</h3><div class="form-row"><input type="text" id="novoProfNome" placeholder="Nome"><input type="email" id="novoProfEmail" placeholder="E-mail"></div><div class="form-row"><input type="text" id="novoProfMatricula" placeholder="Matrícula"></div><button id="salvarProfBtn" class="btn btn-primary">Cadastrar</button></div>
-            <div class="card"><h3>Lista de Professores</h3><div id="listaProfessores">${renderizarTabelaProfessores(professores)}</div></div>
+            <div class="card">
+                <h3>Cadastrar Professor</h3>
+                <div class="form-row">
+                    <input type="text" id="novoProfNome" placeholder="Nome">
+                    <input type="email" id="novoProfEmail" placeholder="E-mail">
+                </div>
+                <div class="form-row">
+                    <input type="text" id="novoProfMatricula" placeholder="Matrícula">
+                </div>
+                <button id="salvarProfBtn" class="btn btn-primary">Cadastrar Professor</button>
+            </div>
+            <div class="card">
+                <h3>Lista de Professores</h3>
+                <div id="listaProfessores">${renderizarTabelaProfessores(professores)}</div>
+            </div>
         `;
-        document.getElementById('salvarProfBtn').onclick = async () => {
-            const nome = document.getElementById('novoProfNome').value.trim();
-            const email = document.getElementById('novoProfEmail').value.trim();
-            const matricula = document.getElementById('novoProfMatricula').value.trim();
-            if (!nome || !email || !matricula) { showToast('Preencha todos os campos', 'error'); return; }
-            try {
-                await apiPost('/admin/professores', { nome, email, matricula });
-                showToast('Professor cadastrado!', 'success');
-                await carregarAdminProfessores(container);
-            } catch (error) { showToast(error.message, 'error'); }
-        };
-    } catch (error) { container.innerHTML = '<div class="error">Erro ao carregar professores</div>'; }
+        document.getElementById('salvarProfBtn').onclick = cadastrarProfessor;
+    } catch (error) { 
+        container.innerHTML = '<div class="error">Erro ao carregar professores</div>';
+        console.error('Erro:', error);
+    }
 }
 
 async function carregarAdminTurmas(container) {
@@ -2798,3 +2812,66 @@ window.carregarAlunoConfig = async (container) => {
 };
 
 console.log('✅ Função carregarAlunoConfig corrigida!');
+
+// Adicione estas funções no final do arquivo, antes do console.log
+
+// ============================================
+// CADASTRO DE ALUNO
+// ============================================
+async function cadastrarAluno() {
+    const nome = document.getElementById('novoAlunoNome')?.value.trim();
+    const email = document.getElementById('novoAlunoEmail')?.value.trim();
+    const matricula = document.getElementById('novoAlunoMatricula')?.value.trim();
+    const turmaId = document.getElementById('novoAlunoTurma')?.value;
+    
+    if (!nome || !email || !matricula) {
+        showToast('Preencha todos os campos', 'error');
+        return;
+    }
+    
+    try {
+        await apiPost('/admin/alunos', { nome, email, matricula, turmaId: turmaId || null });
+        showToast('Aluno cadastrado com sucesso!', 'success');
+        
+        // Limpar formulário
+        document.getElementById('novoAlunoNome').value = '';
+        document.getElementById('novoAlunoEmail').value = '';
+        document.getElementById('novoAlunoMatricula').value = '';
+        
+        // Recarregar lista
+        const content = document.getElementById('adminContent');
+        if (content) await carregarAdminAlunos(content);
+    } catch (error) {
+        showToast(error.message, 'error');
+    }
+}
+
+// ============================================
+// CADASTRO DE PROFESSOR
+// ============================================
+async function cadastrarProfessor() {
+    const nome = document.getElementById('novoProfNome')?.value.trim();
+    const email = document.getElementById('novoProfEmail')?.value.trim();
+    const matricula = document.getElementById('novoProfMatricula')?.value.trim();
+    
+    if (!nome || !email || !matricula) {
+        showToast('Preencha todos os campos', 'error');
+        return;
+    }
+    
+    try {
+        await apiPost('/admin/professores', { nome, email, matricula });
+        showToast('Professor cadastrado com sucesso!', 'success');
+        
+        // Limpar formulário
+        document.getElementById('novoProfNome').value = '';
+        document.getElementById('novoProfEmail').value = '';
+        document.getElementById('novoProfMatricula').value = '';
+        
+        // Recarregar lista
+        const content = document.getElementById('adminContent');
+        if (content) await carregarAdminProfessores(content);
+    } catch (error) {
+        showToast(error.message, 'error');
+    }
+}
