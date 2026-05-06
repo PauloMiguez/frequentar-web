@@ -370,7 +370,8 @@ app.get('/api/professor/stats', authMiddleware, async (req, res) => {
             JOIN alunos_turmas at ON at.turma_id = pt.turma_id
             WHERE pt.professor_id = ?
         `, [req.usuario.id]);
-        const hoje = new Date().toISOString().split('T')[0];
+        const agoraDate = new Date();
+    const hoje = agoraDate.toISOString().split('T')[0];
         const [presentes] = await pool.query(`
             SELECT COUNT(DISTINCT p.aluno_id) as total
             FROM presenca p
@@ -415,8 +416,9 @@ app.get('/api/professor/turmas/:turmaId/alunos', authMiddleware, async (req, res
 app.post('/api/professor/presenca', authMiddleware, async (req, res) => {
     if (req.usuario.perfil !== 'professor') return res.status(403).json({ error: 'Acesso negado' });
     const { turma_id, presencas } = req.body;
-    const hoje = new Date().toISOString().split('T')[0];
-    const agora = new Date().toTimeString().split(' ')[0];
+    const agoraDate = new Date();
+    const hoje = agoraDate.toISOString().split('T')[0];
+    const agora = agoraDate.toTimeString().split(' ')[0];
     try {
         for (const p of presencas) {
             await pool.query(`
@@ -546,8 +548,9 @@ app.post('/api/wifi/config', authMiddleware, async (req, res) => {
 // ============================================
 app.post('/api/presenca/auto', async (req, res) => {
     const { mac_address, ssid, bssid, client_ip } = req.body;
-    const hoje = new Date().toISOString().split('T')[0];
-    const agora = new Date().toTimeString().split(' ')[0];
+    const agoraDate = new Date();
+    const hoje = agoraDate.toISOString().split('T')[0];
+    const agora = agoraDate.toTimeString().split(' ')[0];
     
     try {
         console.log('📱 [PRESENCA_AUTO] Recebido:', { mac_address, ssid, bssid });
