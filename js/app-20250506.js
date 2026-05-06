@@ -576,35 +576,30 @@ async function carregarAlunoConfig(container) {
 // ============================================
 
 function renderizarTabelaAlunos(alunos) {
-    if (!alunos.length) return '<p>Nenhum aluno cadastrado</p>';
-    return `
-        <table class="data-table">
-            <thead>
-                <tr>
-                    <th>Nome</th>
-                    <th>Matrícula</th>
-                    <th>E-mail</th>
-                    <th>Turma</th>
-                    <th>Ações</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${alunos.map(a => `
-                    <tr>
-                        <td>${escapeHtml(a.nome)}</td
-                        <td>${escapeHtml(a.matricula)}</td
-                        <td>${escapeHtml(a.email)}</td
-                        <td>${escapeHtml(a.turma_nome || '-')}</td
-                        <td>
-                            <button class="btn-sm btn-outline" onclick="editarAluno(${a.id})">✏️ Editar</button>
-                            <button class="btn-sm btn-danger" onclick="excluirAluno(${a.id})">🗑️ Excluir</button>
-                         </td
-                    </tr>
-                `).join('')}
-            </tbody>
-        </table>
-    `;
+    if (!alunos || !alunos.length) {
+        return '<p>Nenhum aluno cadastrado</p>';
+    }
+    
+    let tabela = '<table class="data-table">';
+    tabela += '<thead><tr><th>Nome</th><th>Matrícula</th><th>E-mail</th><th>Turma</th><th>Ações</th></tr></thead>';
+    tabela += '<tbody>';
+    
+    for (let i = 0; i < alunos.length; i++) {
+        const a = alunos[i];
+        tabela += '<tr>';
+        tabela += '<td>' + escapeHtml(a.nome) + '</td>';
+        tabela += '<td>' + escapeHtml(a.matricula) + '</td>';
+        tabela += '<td>' + escapeHtml(a.email) + '</td>';
+        tabela += '<td>' + escapeHtml(a.turma_nome || '-') + '</td>';
+        tabela += '<td><button class="btn-sm btn-outline" onclick="editarAluno(' + a.id + ')">✏️ Editar</button> ';
+        tabela += '<button class="btn-sm btn-danger" onclick="excluirAluno(' + a.id + ')">🗑️ Excluir</button></td>';
+        tabela += '</tr>';
+    }
+    
+    tabela += '</tbody></table>';
+    return tabela;
 }
+
 function renderizarTabelaProfessores(professores) {
     if (!professores || !professores.length) {
         return '<p>Nenhum professor cadastrado</p>';
@@ -625,7 +620,7 @@ function renderizarTabelaProfessores(professores) {
         tabela += '</tr>';
     }
     
-    tabela += '</tbody></table>';
+    tabela += '</tbody></tr>';
     return tabela;
 }
 
