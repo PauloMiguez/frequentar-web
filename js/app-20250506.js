@@ -576,15 +576,63 @@ async function carregarAlunoConfig(container) {
 // ============================================
 
 function renderizarTabelaAlunos(alunos) {
-    if (!alunos.length) return '<p>Nenhum aluno</p>';
-    return `<table class="data-table"><thead><tr><th>Nome</th><th>Matrícula</th><th>E-mail</th><th>Turma</th><th>Ações</th></tr></thead><tbody>${alunos.map(a => `<tr><td>${escapeHtml(a.nome)}</td><td>${escapeHtml(a.matricula)}</td><td>${escapeHtml(a.email)}</td><td>${escapeHtml(a.turma_nome || '-')}</td><td><button class="btn-sm btn-outline" onclick="editarAluno(${a.id})">Editar</button> <button class="btn-sm btn-danger" onclick="excluirAluno(${a.id})">Excluir</button></td></tr>`).join('')}</tbody></table>`;
+    if (!alunos.length) return '<p>Nenhum aluno cadastrado</p>';
+    return `
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Matrícula</th>
+                    <th>E-mail</th>
+                    <th>Turma</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${alunos.map(a => `
+                    <tr>
+                        <td>${escapeHtml(a.nome)}</td
+                        <td>${escapeHtml(a.matricula)}</td
+                        <td>${escapeHtml(a.email)}</td
+                        <td>${escapeHtml(a.turma_nome || '-')}</td
+                        <td>
+                            <button class="btn-sm btn-outline" onclick="editarAluno(${a.id})">✏️ Editar</button>
+                            <button class="btn-sm btn-danger" onclick="excluirAluno(${a.id})">🗑️ Excluir</button>
+                         </td
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+    `;
 }
-
 function renderizarTabelaProfessores(professores) {
-    if (!professores.length) return '<p>Nenhum professor</p>';
-    return `<table class="data-table"><thead><tr><th>Nome</th><th>Matrícula</th><th>E-mail</th><th>Ações</th></tr></thead><tbody>${professores.map(p => `<tr><td>${escapeHtml(p.nome)}</td><td>${escapeHtml(p.matricula)}</td><td>${escapeHtml(p.email)}</td><td><button class="btn-sm btn-outline" onclick="editarProfessor(${p.id})">Editar</button> <button class="btn-sm btn-danger" onclick="excluirProfessor(${p.id})">Excluir</button></td></tr>`).join('')}</tbody></table>`;
+    if (!professores.length) return '<p>Nenhum professor cadastrado</p>';
+    return `
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Matrícula</th>
+                    <th>E-mail</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${professores.map(p => `
+                    <tr>
+                        <td>${escapeHtml(p.nome)}</td
+                        <td>${escapeHtml(p.matricula)}</td
+                        <td>${escapeHtml(p.email)}</td
+                        <td>
+                            <button class="btn-sm btn-outline" onclick="editarProfessor(${p.id})">✏️ Editar</button>
+                            <button class="btn-sm btn-danger" onclick="excluirProfessor(${p.id})">🗑️ Excluir</button>
+                         </td
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+    `;
 }
-
 function renderizarTabelaTurmas(turmas) {
     if (!turmas.length) return '<p>Nenhuma turma</p>';
     return `<table class="data-table"><thead><tr><th>Nome</th><th>Código</th><th>Professor</th><th>Período</th><th>Ações</th></tr></thead><tbody>${turmas.map(t => `<tr><td>${escapeHtml(t.nome)}</td><td>${escapeHtml(t.codigo)}</td><td>${escapeHtml(t.professor_nome || '-')}</td><td>${escapeHtml(t.periodo || '-')}</td><td><button class="btn-sm btn-outline" onclick="editarTurma(${t.id})">Editar</button> <button class="btn-sm btn-danger" onclick="excluirTurma(${t.id})">Excluir</button></td></tr>`).join('')}</tbody></table>`;
@@ -2909,3 +2957,147 @@ async function cadastrarProfessor() {
         showToast(error.message, 'error');
     }
 }
+
+// ============================================
+// EDIÇÃO DE ALUNO
+// ============================================
+window.editarAluno = async (id) => {
+    try {
+        const alunos = await apiGet('/admin/alunos');
+        const aluno = alunos.find(a => a.id === id);
+        
+        const modal = document.createElement('div');
+        modal.className = 'modal active';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Editar Aluno - ${escapeHtml(aluno.nome)}</h3>
+                    <span class="modal-close">×</span>
+                </div>
+                <div class="modal-body">
+                    <input type="text" id="editAlunoNome" value="${escapeHtml(aluno.nome)}" placeholder="Nome">
+                    <input type="email" id="editAlunoEmail" value="${escapeHtml(aluno.email)}" placeholder="E-mail">
+                    <input type="text" id="editAlunoMatricula" value="${escapeHtml(aluno.matricula)}" placeholder="Matrícula">
+                    <div class="form-row">
+                        <input type="password" id="editAlunoSenha" placeholder="Nova senha (opcional)">
+                        <small>Deixe em branco para manter a senha atual</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="saveEditAlunoBtn" class="btn btn-primary">Salvar</button>
+                    <button class="btn btn-outline modal-close-btn">Cancelar</button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        const closeModal = () => modal.remove();
+        modal.querySelectorAll('.modal-close, .modal-close-btn').forEach(btn => {
+            btn.addEventListener('click', closeModal);
+        });
+        
+        document.getElementById('saveEditAlunoBtn').onclick = async () => {
+            const nome = document.getElementById('editAlunoNome').value.trim();
+            const email = document.getElementById('editAlunoEmail').value.trim();
+            const matricula = document.getElementById('editAlunoMatricula').value.trim();
+            const novaSenha = document.getElementById('editAlunoSenha').value.trim();
+            
+            if (!nome || !email || !matricula) {
+                showToast('Preencha todos os campos', 'error');
+                return;
+            }
+            
+            try {
+                await apiPut(`/admin/alunos/${id}`, { nome, email, matricula });
+                
+                if (novaSenha) {
+                    await apiPut(`/admin/usuarios/${id}/senha`, { senha: novaSenha });
+                    showToast(`Aluno atualizado! Nova senha: ${novaSenha}`, 'success');
+                } else {
+                    showToast('Aluno atualizado com sucesso!', 'success');
+                }
+                
+                closeModal();
+                const content = document.getElementById('adminContent');
+                if (content) await carregarAdminAlunos(content);
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+        };
+    } catch (error) {
+        showToast('Erro ao carregar dados do aluno', 'error');
+    }
+};
+
+// ============================================
+// EDIÇÃO DE PROFESSOR
+// ============================================
+window.editarProfessor = async (id) => {
+    try {
+        const professores = await apiGet('/admin/professores');
+        const professor = professores.find(p => p.id === id);
+        
+        const modal = document.createElement('div');
+        modal.className = 'modal active';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Editar Professor - ${escapeHtml(professor.nome)}</h3>
+                    <span class="modal-close">×</span>
+                </div>
+                <div class="modal-body">
+                    <input type="text" id="editProfNome" value="${escapeHtml(professor.nome)}" placeholder="Nome">
+                    <input type="email" id="editProfEmail" value="${escapeHtml(professor.email)}" placeholder="E-mail">
+                    <input type="text" id="editProfMatricula" value="${escapeHtml(professor.matricula)}" placeholder="Matrícula">
+                    <div class="form-row">
+                        <input type="password" id="editProfSenha" placeholder="Nova senha (opcional)">
+                        <small>Deixe em branco para manter a senha atual</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="saveEditProfBtn" class="btn btn-primary">Salvar</button>
+                    <button class="btn btn-outline modal-close-btn">Cancelar</button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        const closeModal = () => modal.remove();
+        modal.querySelectorAll('.modal-close, .modal-close-btn').forEach(btn => {
+            btn.addEventListener('click', closeModal);
+        });
+        
+        document.getElementById('saveEditProfBtn').onclick = async () => {
+            const nome = document.getElementById('editProfNome').value.trim();
+            const email = document.getElementById('editProfEmail').value.trim();
+            const matricula = document.getElementById('editProfMatricula').value.trim();
+            const novaSenha = document.getElementById('editProfSenha').value.trim();
+            
+            if (!nome || !email || !matricula) {
+                showToast('Preencha todos os campos', 'error');
+                return;
+            }
+            
+            try {
+                await apiPut(`/admin/professores/${id}`, { nome, email, matricula });
+                
+                if (novaSenha) {
+                    await apiPut(`/admin/usuarios/${id}/senha`, { senha: novaSenha });
+                    showToast(`Professor atualizado! Nova senha: ${novaSenha}`, 'success');
+                } else {
+                    showToast('Professor atualizado com sucesso!', 'success');
+                }
+                
+                closeModal();
+                const content = document.getElementById('adminContent');
+                if (content) await carregarAdminProfessores(content);
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+        };
+    } catch (error) {
+        showToast('Erro ao carregar dados do professor', 'error');
+    }
+};
