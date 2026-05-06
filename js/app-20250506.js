@@ -143,6 +143,9 @@ async function carregarAdminAlunos(container) {
                         ${turmas.map(t => `<option value="${t.id}">${escapeHtml(t.nome)}</option>`).join('')}
                     </select>
                 </div>
+                <div class="form-row">
+                    <input type="password" id="novoAlunoSenha" placeholder="Senha (deixe em branco para usar padrão: aluno123)">
+                </div>
                 <button id="salvarAlunoBtn" class="btn btn-primary">Cadastrar Aluno</button>
             </div>
             <div class="card">
@@ -156,6 +159,36 @@ async function carregarAdminAlunos(container) {
         console.error('Erro:', error);
     }
 }
+
+async function cadastrarAluno() {
+    const nome = document.getElementById('novoAlunoNome')?.value.trim();
+    const email = document.getElementById('novoAlunoEmail')?.value.trim();
+    const matricula = document.getElementById('novoAlunoMatricula')?.value.trim();
+    const turmaId = document.getElementById('novoAlunoTurma')?.value;
+    const senha = document.getElementById('novoAlunoSenha')?.value.trim();
+    
+    if (!nome || !email || !matricula) {
+        showToast('Preencha todos os campos', 'error');
+        return;
+    }
+    
+    try {
+        const response = await apiPost('/admin/alunos', { nome, email, matricula, turmaId: turmaId || null, senha: senha || undefined });
+        const senhaMsg = response.message.includes('Senha:') ? ` A senha é: ${response.message.split('Senha:')[1]}` : '';
+        showToast(`Aluno cadastrado com sucesso!${senhaMsg}`, 'success');
+        
+        document.getElementById('novoAlunoNome').value = '';
+        document.getElementById('novoAlunoEmail').value = '';
+        document.getElementById('novoAlunoMatricula').value = '';
+        if (document.getElementById('novoAlunoSenha')) document.getElementById('novoAlunoSenha').value = '';
+        
+        const content = document.getElementById('adminContent');
+        if (content) await carregarAdminAlunos(content);
+    } catch (error) {
+        showToast(error.message, 'error');
+    }
+}
+
 async function carregarAdminProfessores(container) {
     try {
         const professores = await apiGet('/admin/professores');
@@ -168,6 +201,7 @@ async function carregarAdminProfessores(container) {
                 </div>
                 <div class="form-row">
                     <input type="text" id="novoProfMatricula" placeholder="Matrícula">
+                    <input type="password" id="novoProfSenha" placeholder="Senha (deixe em branco para usar padrão: prof123)">
                 </div>
                 <button id="salvarProfBtn" class="btn btn-primary">Cadastrar Professor</button>
             </div>
@@ -180,6 +214,34 @@ async function carregarAdminProfessores(container) {
     } catch (error) { 
         container.innerHTML = '<div class="error">Erro ao carregar professores</div>';
         console.error('Erro:', error);
+    }
+}
+
+async function cadastrarProfessor() {
+    const nome = document.getElementById('novoProfNome')?.value.trim();
+    const email = document.getElementById('novoProfEmail')?.value.trim();
+    const matricula = document.getElementById('novoProfMatricula')?.value.trim();
+    const senha = document.getElementById('novoProfSenha')?.value.trim();
+    
+    if (!nome || !email || !matricula) {
+        showToast('Preencha todos os campos', 'error');
+        return;
+    }
+    
+    try {
+        const response = await apiPost('/admin/professores', { nome, email, matricula, senha: senha || undefined });
+        const senhaMsg = response.message.includes('Senha:') ? ` A senha é: ${response.message.split('Senha:')[1]}` : '';
+        showToast(`Professor cadastrado com sucesso!${senhaMsg}`, 'success');
+        
+        document.getElementById('novoProfNome').value = '';
+        document.getElementById('novoProfEmail').value = '';
+        document.getElementById('novoProfMatricula').value = '';
+        if (document.getElementById('novoProfSenha')) document.getElementById('novoProfSenha').value = '';
+        
+        const content = document.getElementById('adminContent');
+        if (content) await carregarAdminProfessores(content);
+    } catch (error) {
+        showToast(error.message, 'error');
     }
 }
 

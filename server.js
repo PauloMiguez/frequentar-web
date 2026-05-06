@@ -128,13 +128,19 @@ app.get('/api/admin/alunos', authMiddleware, async (req, res) => {
 
 app.post('/api/admin/alunos', authMiddleware, async (req, res) => {
     if (req.usuario.perfil !== 'admin') return res.status(403).json({ error: 'Acesso negado' });
-    const { nome, matricula, email, turmaId } = req.body;
+    const { nome, matricula, email, turmaId, senha } = req.body;
     try {
-        const senhaHash = await bcrypt.hash('aluno123', 10);
-        const [result] = await pool.query('INSERT INTO usuarios (nome, email, senha_hash, perfil, matricula) VALUES (?, ?, ?, ?, ?)', [nome, email, senhaHash, 'aluno', matricula]);
+        const senhaUsuario = senha || 'aluno123';
+        const senhaHash = await bcrypt.hash(senhaUsuario, 10);
+        const [result] = await pool.query(
+            'INSERT INTO usuarios (nome, email, senha_hash, perfil, matricula) VALUES (?, ?, ?, ?, ?)',
+            [nome, email, senhaHash, 'aluno', matricula]
+        );
         if (turmaId) await pool.query('INSERT INTO alunos_turmas (aluno_id, turma_id) VALUES (?, ?)', [result.insertId, turmaId]);
-        res.json({ id: result.insertId, message: 'Aluno cadastrado com sucesso' });
-    } catch (error) { res.status(500).json({ error: error.message }); }
+        res.json({ id: result.insertId, message: `Aluno cadastrado com sucesso. Senha: ${senhaUsuario}` });
+    } catch (error) { 
+        res.status(500).json({ error: error.message }); 
+    }
 });
 
 app.put('/api/admin/alunos/:id', authMiddleware, async (req, res) => {
@@ -179,14 +185,19 @@ app.get('/api/admin/professores', authMiddleware, async (req, res) => {
 
 app.post('/api/admin/professores', authMiddleware, async (req, res) => {
     if (req.usuario.perfil !== 'admin') return res.status(403).json({ error: 'Acesso negado' });
-    const { nome, email, matricula } = req.body;
+    const { nome, email, matricula, senha } = req.body;
     try {
-        const senhaHash = await bcrypt.hash('prof123', 10);
-        const [result] = await pool.query('INSERT INTO usuarios (nome, email, senha_hash, perfil, matricula) VALUES (?, ?, ?, ?, ?)', [nome, email, senhaHash, 'professor', matricula]);
-        res.json({ id: result.insertId, message: 'Professor cadastrado com sucesso' });
-    } catch (error) { res.status(500).json({ error: error.message }); }
+        const senhaUsuario = senha || 'prof123';
+        const senhaHash = await bcrypt.hash(senhaUsuario, 10);
+        const [result] = await pool.query(
+            'INSERT INTO usuarios (nome, email, senha_hash, perfil, matricula) VALUES (?, ?, ?, ?, ?)',
+            [nome, email, senhaHash, 'professor', matricula]
+        );
+        res.json({ id: result.insertId, message: `Professor cadastrado com sucesso. Senha: ${senhaUsuario}` });
+    } catch (error) { 
+        res.status(500).json({ error: error.message }); 
+    }
 });
-
 app.put('/api/admin/professores/:id', authMiddleware, async (req, res) => {
     if (req.usuario.perfil !== 'admin') return res.status(403).json({ error: 'Acesso negado' });
     const { id } = req.params;
