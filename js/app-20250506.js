@@ -606,8 +606,9 @@ function renderizarTabelaAlunos(alunos) {
     `;
 }
 function renderizarTabelaProfessores(professores) {
-    if (!professores.length) return '<p>Nenhum professor cadastrado</p>';
-    return `
+    if (!professores || !professores.length) return '<p>Nenhum professor cadastrado</p>';
+    
+    let html = `
         <table class="data-table">
             <thead>
                 <tr>
@@ -618,21 +619,30 @@ function renderizarTabelaProfessores(professores) {
                 </tr>
             </thead>
             <tbody>
-                ${professores.map(p => `
-                    <tr>
-                        <td>${escapeHtml(p.nome)}</td
-                        <td>${escapeHtml(p.matricula)}</td
-                        <td>${escapeHtml(p.email)}</td
-                        <td>
-                            <button class="btn-sm btn-outline" onclick="editarProfessor(${p.id})">✏️ Editar</button>
-                            <button class="btn-sm btn-danger" onclick="excluirProfessor(${p.id})">🗑️ Excluir</button>
-                         </td
-                    </tr>
-                `).join('')}
+    `;
+    
+    for (const p of professores) {
+        html += `
+            <tr>
+                <td>${escapeHtml(p.nome)}</td
+                <td>${escapeHtml(p.matricula)}</td
+                <td>${escapeHtml(p.email)}</td
+                <td>
+                    <button class="btn-sm btn-outline" onclick="editarProfessor(${p.id})">✏️ Editar</button>
+                    <button class="btn-sm btn-danger" onclick="excluirProfessor(${p.id})">🗑️ Excluir</button>
+                 </td
+            </tr>
+        `;
+    }
+    
+    html += `
             </tbody>
         </table>
     `;
+    
+    return html;
 }
+
 function renderizarTabelaTurmas(turmas) {
     if (!turmas.length) return '<p>Nenhuma turma</p>';
     return `<table class="data-table"><thead><tr><th>Nome</th><th>Código</th><th>Professor</th><th>Período</th><th>Ações</th></tr></thead><tbody>${turmas.map(t => `<tr><td>${escapeHtml(t.nome)}</td><td>${escapeHtml(t.codigo)}</td><td>${escapeHtml(t.professor_nome || '-')}</td><td>${escapeHtml(t.periodo || '-')}</td><td><button class="btn-sm btn-outline" onclick="editarTurma(${t.id})">Editar</button> <button class="btn-sm btn-danger" onclick="excluirTurma(${t.id})">Excluir</button></td></tr>`).join('')}</tbody></table>`;
@@ -1750,32 +1760,44 @@ window.editarAluno = async (id) => {
 
 // Renderizar tabela de alunos
 function renderizarTabelaAlunos(alunos) {
-    if (!alunos.length) return '<p>Nenhum aluno ativo cadastrado</p>';
-    return `
+    if (!alunos || !alunos.length) return '<p>Nenhum aluno cadastrado</p>';
+    
+    let html = `
         <table class="data-table">
             <thead>
                 <tr>
-                    <th>Nome</th><th>Matrícula</th><th>E-mail</th><th>Turma</th><th>Ações</th>
+                    <th>Nome</th>
+                    <th>Matrícula</th>
+                    <th>E-mail</th>
+                    <th>Turma</th>
+                    <th>Ações</th>
                 </tr>
             </thead>
             <tbody>
-                ${alunos.map(a => `
-                    <tr>
-                        <td>${escapeHtml(a.nome)}</td>
-                        <td>${escapeHtml(a.matricula)}</td>
-                        <td>${escapeHtml(a.email)}</td>
-                        <td>${escapeHtml(a.turma_nome || '-')}</td>
-                        <td>
-                            <button class="btn-sm btn-outline" onclick="editarAluno(${a.id})">✏️ Editar</button>
-                            <button class="btn-sm btn-danger" onclick="excluirAluno(${a.id})">🗑️ Excluir</button>
-                        </td>
-                    </tr>
-                `).join('')}
+    `;
+    
+    for (const a of alunos) {
+        html += `
+            <tr>
+                <td>${escapeHtml(a.nome)}</td
+                <td>${escapeHtml(a.matricula)}</td
+                <td>${escapeHtml(a.email)}</td
+                <td>${escapeHtml(a.turma_nome || '-')}</td
+                <td>
+                    <button class="btn-sm btn-outline" onclick="editarAluno(${a.id})">✏️ Editar</button>
+                    <button class="btn-sm btn-danger" onclick="excluirAluno(${a.id})">🗑️ Excluir</button>
+                 </td
+            </tr>
+        `;
+    }
+    
+    html += `
             </tbody>
         </table>
     `;
+    
+    return html;
 }
-
 console.log('✅ Funções atualizadas - exclusão lógica implementada!');
 
 // ============================================
