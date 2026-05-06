@@ -247,33 +247,52 @@ async function carregarAdminRelatorios(container) {
         container.innerHTML = `
             <div class="card"><h3>Relatórios</h3><select id="relatorioTurma"><option value="">Todas as Turmas</option>${turmas.map(t => `<option value="${t.id}">${escapeHtml(t.nome)}</option>`).join('')}</select><div class="form-row"><input type="date" id="relatorioDataInicio"><input type="date" id="relatorioDataFim"></div><button id="gerarRelatorioBtn" class="btn btn-primary">Gerar</button><div id="relatorioResultado"></div></div>
         `;
-        document.getElementById('relatorioResultado').innerHTML = `
-    <h4>Resultado</h4>
-    <table class="data-table">
-        <thead>
-            <tr>
-                <th>Aluno</th>
-                <th>Matrícula</th>
-                <th>Data/Hora</th>
-                <th>Turma</th>
-                <th>Status</th>
-            </tr>
-        </thead>
-        <tbody>
-            ${relatorio.map(r => `
-                <tr>
-                    <td>${escapeHtml(r.nome_aluno)}</td>
-                    <td>${escapeHtml(r.matricula)}</td>
-                    <td>${r.data_formatada ? `${r.data_formatada} ${r.hora}` : '-'}</td>
-                    <td>${escapeHtml(r.turma_nome)}</td>
-                    <td>${r.status === 'presente' ? 'Presente' : 'Ausente'}</td>
-                </tr>
-            `).join('')}
-        </tbody>
-    </table>
-`;
+        document.getElementById('gerarRelatorioBtn').onclick = async () => {
+            try {
+                const turmaId = document.getElementById('relatorioTurma').value;
+                const dataInicio = document.getElementById('relatorioDataInicio').value;
+                const dataFim = document.getElementById('relatorioDataFim').value;
+                let url = '/admin/relatorios';
+                const params = [];
+                if (turmaId) params.push(`turma_id=${turmaId}`);
+                if (dataInicio) params.push(`data_inicio=${dataInicio}`);
+                if (dataFim) params.push(`data_fim=${dataFim}`);
+                if (params.length) url += `?${params.join('&')}`;
+                const relatorio = await apiGet(url);
+                document.getElementById('relatorioResultado').innerHTML = `
+                    <h4>Resultado</h4>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Aluno</th>
+                                <th>Matrícula</th>
+                                <th>Data/Hora</th>
+                                <th>Turma</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${relatorio.map(r => `
+                                <tr>
+                                    <td>${escapeHtml(r.nome_aluno)}</td>
+                                    <td>${escapeHtml(r.matricula)}</td>
+                                    <td>${r.data_formatada ? `${r.data_formatada} ${r.hora}` : '-'}</td>
+                                    <td>${escapeHtml(r.turma_nome)}</td>
+                                    <td>${r.status === 'presente' ? 'Presente' : 'Ausente'}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+            } catch (error) {
+                console.error('Erro:', error);
+                document.getElementById('relatorioResultado').innerHTML = '<div class="error">Erro ao gerar relatório</div>';
+            }
         };
-    } catch (error) { container.innerHTML = '<div class="error">Erro ao carregar relatórios</div>'; }
+    } catch (error) {
+        console.error('Erro:', error);
+        container.innerHTML = '<div class="error">Erro ao carregar relatórios</div>';
+    }
 }
 
 async function carregarAdminConfig(container) {
