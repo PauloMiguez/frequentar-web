@@ -834,3 +834,13 @@ app.put('/api/admin/usuarios/:id/senha', authMiddleware, async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
+
+app.get('/api/debug/horario', (req, res) => {
+    const agora = new Date();
+    res.json({
+        server_time: agora,
+        server_time_iso: agora.toISOString(),
+        server_time_br: agora.toLocaleString('pt-BR'),
+        hoje: agora.toISOString().split('T')[0]
+    });
+});
