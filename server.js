@@ -138,7 +138,7 @@ app.get('/api/admin/alunos', authMiddleware, async (req, res) => {
     if (req.usuario.perfil !== 'admin') return res.status(403).json({ error: 'Acesso negado' });
     try {
         const [rows] = await pool.query(`
-            SELECT u.id, u.nome, u.email, u.matricula, u.ativo, t.nome as turma_nome 
+            SELECT u.id, u.nome, u.email, u.matricula, u.ativo, u.mac_address, t.nome as turma_nome 
             FROM usuarios u
             LEFT JOIN alunos_turmas at ON at.aluno_id = u.id
             LEFT JOIN turmas t ON t.id = at.turma_id
