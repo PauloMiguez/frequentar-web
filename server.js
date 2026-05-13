@@ -459,9 +459,12 @@ app.get('/api/professor/turmas/:turmaId/alunos', authMiddleware, async (req, res
 app.post('/api/professor/presenca', authMiddleware, async (req, res) => {
     if (req.usuario.perfil !== 'professor') return res.status(403).json({ error: 'Acesso negado' });
     const { turma_id, presencas } = req.body;
-    const agoraDate = new Date();
-    const hoje = agoraDate.toISOString().split('T')[0];
-    const agora = agoraDate.toTimeString().split(' ')[0];
+    // Usar horário de Brasília (respeitando o fuso configurado)
+const agoraDate = new Date();
+const hoje = agoraDate.toLocaleDateString('en-CA'); // YYYY-MM-DD
+const agora = agoraDate.toLocaleTimeString('pt-BR', { hour12: false }); // HH:MM:SS
+
+console.log(`🕐 Horário atual (Brasília): ${hoje} ${agora}`);
     try {
         for (const p of presencas) {
             await pool.query(`
@@ -592,8 +595,10 @@ app.post('/api/wifi/config', authMiddleware, async (req, res) => {
 app.post('/api/presenca/auto', async (req, res) => {
     const { mac_address, ssid, bssid, client_ip } = req.body;
     const agoraDate = new Date();
-    const hoje = agoraDate.toISOString().split('T')[0];
-    const agora = agoraDate.toTimeString().split(' ')[0];
+    const hoje = agoraDate.toLocaleDateString('en-CA'); // YYYY-MM-DD
+    const agora = agoraDate.toLocaleTimeString('pt-BR', { hour12: false }); // HH:MM:SS
+
+    console.log(`🕐 Horário atual (Brasília): ${hoje} ${agora}`);
     
     try {
         console.log('📱 [PRESENCA_AUTO] Recebido:', { mac_address, ssid, bssid });
