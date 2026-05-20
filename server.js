@@ -377,8 +377,12 @@ app.delete('/api/admin/aps/:id', authMiddleware, async (req, res) => {
 
 app.get('/api/admin/relatorios', authMiddleware, async (req, res) => {
     if (req.usuario.perfil !== 'admin') return res.status(403).json({ error: 'Acesso negado' });
+    
+    const { turma_id, data_inicio, data_fim } = req.query;
+    console.log(`📊 Relatório solicitado: turma=${turma_id}, data_inicio=${data_inicio}, data_fim=${data_fim}`);
+    
     try {
-        const [rows] = await pool.query(`
+        let query = `
             SELECT 
                 u.nome as nome_aluno, 
                 u.matricula, 
@@ -390,15 +394,38 @@ app.get('/api/admin/relatorios', authMiddleware, async (req, res) => {
             FROM presenca p
             JOIN usuarios u ON u.id = p.aluno_id
             LEFT JOIN turmas t ON t.id = p.turma_id
-            ORDER BY p.data DESC, p.hora DESC
-        `);
+            WHERE 1=1
+        `;
+        
+        const params = [];
+        
+        if (turma_id) {
+            query += ` AND p.turma_id = ?`;
+            params.push(turma_id);
+        }
+        
+        if (data_inicio) {
+            query += ` AND p.data >= ?`;
+            params.push(data_inicio);
+        }
+        
+        if (data_fim) {
+            query += ` AND p.data <= ?`;
+            params.push(data_fim);
+        }
+        
+        query += ` ORDER BY p.data DESC, p.hora DESC`;
+        
+        console.log(`📝 Query: ${query}`);
+        console.log(`📝 Params: ${params}`);
+        
+        const [rows] = await pool.query(query, params);
         res.json(rows);
     } catch (error) { 
         console.error('Erro no relatório:', error);
         res.status(500).json({ error: error.message }); 
     }
 });
-
 // ============================================
 // PROFESSOR
 // ============================================
